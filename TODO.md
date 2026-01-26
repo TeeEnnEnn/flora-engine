@@ -1,9 +1,16 @@
 # TODO
 
-- [ ] Add more widgets: 
-  - [ ] Image widget
-  - [ ] Text box widget (an optimization of box widget with one text widget child)
+- [ ] Handle resizing events
+- [ ] Add more widgets:
+    - [ ] Image widget
+    - [ ] Text box widget (an optimization of box widget with one text widget child)
+- [ ] Better text widget sizing
+    - [ ] A way to intrinsically size containers that hold text
 - [ ] Hover effects
-- [ ] Multi screen navigation 
+- [x] Multi screen navigation
+    - [x] Naming different screens
+    - [x] Ways to set a screen as the current screen
 - [ ] More Alignment Options
-- [ ] Scrollable Widget
+- [ ] Scrollable Widgets
+- [ ] Make C library
+- [ ] Make better demo scene

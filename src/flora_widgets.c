@@ -437,13 +437,8 @@ bool destroy_flora_widget(FloraWidget *widget) {
     if (!widget) {
         return false;
     }
-
-    for (int i = 0; i < widget->child_count; i++) {
-        FloraWidget *child = widget->children[i];
-        if (child) {
-            destroy_flora_widget(child);
-        }
+    if (widget->children) {
+        free(widget->children);
     }
-    free(widget->children);
     return true;
 }
