@@ -8,8 +8,8 @@
 #include "flora_screens.h"
 
 void application_loop(FloraApplicationState *state) {
-    FloraScreen *screen = state->current_screen;
     while (state->running) {
+        FloraScreen *screen = state->current_screen;
         const uint64_t frame_start = SDL_GetTicks();
         get_input(state);
         update_screen(screen, state);
@@ -21,15 +21,15 @@ void application_loop(FloraApplicationState *state) {
         const uint64_t frame_end = SDL_GetTicks();
 
         state->delta_time = (frame_end - frame_start) / 1000.0f;
-        printf("Frames per second (FPS) = %f\n", 1 / state->delta_time);
+        // printf("Log: Frames per second (FPS) = %f\n", 1 / state->delta_time);
         state->last_frame_time = frame_end;
     }
 }
 
 int main(const int argc, char **argv) {
-    int width = 800;
-    int height = 600;
-    char *title = "Flora Engine";
+    int width = INITIAL_WINDOW_WIDTH;
+    int height = INITIAL_WINDOW_HEIGHT;
+    const char *title = WINDOW_TITLE;
     if (argc < 4) {
         printf("Alternate Usage: %s <width> <height> <title>\n", argv[0]);
         printf("Using: %s %d %d %s\n", argv[0], width, height, "Flora Engine");
@@ -39,26 +39,18 @@ int main(const int argc, char **argv) {
         title = argv[3];
     }
 
+    FloraApplicationState *state = calloc(1, sizeof(FloraApplicationState));
+    if (!init_application(state, title, width, height)) {
+        fprintf(stderr, "Error: Failed to initialize application\n");
+        return FLORA_ENGINE_FATAL;
+    }
+    state->running = true;
+    application_loop(state);
 
-    FloraApplicationState state = {
-        .renderer = NULL,
-        .window = NULL,
-        .last_frame_time = 0,
-        .delta_time = 0.0f,
-        .running = false,
-        .window_width = width,
-        .window_height = height,
-        .event_queue = {0},
-        .current_screen = NULL
-    };
-
-    init_application(&state, title, state.window_width, state.window_height);
-    state.running = true;
-    application_loop(&state);
-
-    if (!destroy_application(&state)) {
+    if (!destroy_application(state)) {
         fprintf(stderr, "Error: Failed to destroy application\n");
         return FLORA_ENGINE_FATAL;
     }
+    free(state);
     return FLORA_ENGINE_SUCCESS;
 }

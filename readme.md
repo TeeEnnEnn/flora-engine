@@ -7,6 +7,7 @@ Flora Engine is a 2D UI engine
 This project uses Cmake and can be used on multiple platforms provided you have the necessary dependencies.
 
 ### Dependencies
+
 - SDL3
 - SDL3_TTF
 - MinGW (Windows)
@@ -21,6 +22,7 @@ cmake --build build
 ```
 
 ### Building on Linux
+
 ```
 cmake -B build
 cmake --build build
@@ -39,3 +41,10 @@ This image shows a demo screen rendered using flora engine:
 ![flora-demo.png](assets/flora-demo.png)
 
 Flora is still in development, so look out for new features.
+
+## Code Style
+
+Function Naming convention:
+
+- Functions must always be named with this format: verb_object()
+    - example: destroy_table()

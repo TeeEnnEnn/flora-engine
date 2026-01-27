@@ -13,7 +13,7 @@ bool create_window(FloraApplicationState *state, const char *title) {
         fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
         return false;
     }
-    state->window = SDL_CreateWindow(title, state->window_width, state->window_height, 0);
+    state->window = SDL_CreateWindow(title, state->window_width, state->window_height, SDL_WINDOW_RESIZABLE);
     if (!state->window) {
         fprintf(stderr, "Failed to create window: %s\n", SDL_GetError());
         SDL_Quit();
@@ -50,7 +50,7 @@ bool destroy_window(FloraApplicationState *state) {
     return true;
 }
 
-bool init_application(FloraApplicationState *state, const char *title, int width, int height) {
+bool init_application(FloraApplicationState *state, const char *title, const int width, const int height) {
     state->window_width = width;
     state->window_height = height;
     if (!create_window(state, title)) {
@@ -58,16 +58,33 @@ bool init_application(FloraApplicationState *state, const char *title, int width
         return false;
     }
 
-    state->current_screen = malloc(sizeof(FloraScreen));
-    if (!state->current_screen) {
-        fprintf(stderr, "Error: Failed to allocate memory for current screen\n");
-        destroy_window(state);
+    FloraScreen *base_screen = create_screen(INITIAL_SCREEN_NAME, base_create_screen, base_destroy_screen);
+    FloraScreen *demo_screen = create_screen("demo", demo_create_screen, base_destroy_screen);
+    if (!base_screen) {
+        fprintf(stderr, "Error: Failed to create base screen\n");
         return false;
     }
-    if (!init_flora_screen(state->current_screen, state)) {
-        fprintf(stderr, "Error: Failed to initialize current screen\n");
+
+    if (!demo_screen) {
+        fprintf(stderr, "Error: Failed to create demo screen\n");
         return false;
     }
+
+    state->current_screen = base_screen;
+    if (!init_table(&state->screen_table, INITIAL_TABLE_CAPACITY)) {
+        fprintf(stderr, "Error: Failed to initialize screen table\n");
+        return false;
+    }
+
+    if (!add_screen(state, state->current_screen)) {
+        fprintf(stderr, "Error: Failed to add %s \n", state->current_screen->name);
+        return false;
+    }
+    if (!add_screen(state, demo_screen)) {
+        fprintf(stderr, "Error: Failed to add %s \n", demo_screen->name);
+        return false;
+    }
+
     if (!init_event_queue(&state->event_queue, 64)) {
         fprintf(stderr, "Error: Failed to initialize event queue\n");
         return false;
@@ -77,8 +94,8 @@ bool init_application(FloraApplicationState *state, const char *title, int width
         return false;
     }
 
-    if (state->current_screen->on_screen_create) {
-        state->current_screen->on_screen_create(state, state->current_screen);
+    if (state->current_screen->on_create_screen) {
+        state->current_screen->on_create_screen(state, state->current_screen);
     }
 
     printf("Log: Application state initialized successfully\n");
@@ -87,6 +104,17 @@ bool init_application(FloraApplicationState *state, const char *title, int width
 
 bool destroy_application(FloraApplicationState *state) {
     destroy_fonts(state);
+    int freed = 0;
+    for (int i = 0; i < state->screen_table.capacity; i++) {
+        FloraScreen *screen = state->screen_table.entries[i].element;
+        if (!screen || !screen->on_destroy_screen) continue;
+        screen->on_destroy_screen(state, screen);
+        free(screen);
+        freed++;
+        if (freed == state->screen_table.count) {
+            break;
+        }
+    }
 
     if (!destroy_window(state)) {
         fprintf(stderr, "Error: Failed to destroy window\n");
@@ -96,6 +124,59 @@ bool destroy_application(FloraApplicationState *state) {
         fprintf(stderr, "Error: Failed to destroy event queue\n");
         return false;
     }
+
+    destroy_table(&state->screen_table);
     printf("Log: Application state destroyed successfully\n");
+    return true;
+}
+
+bool add_screen(FloraApplicationState *state, FloraScreen *screen) {
+    if (!screen) {
+        fprintf(stderr, "Error: <screen> is not initialized\n");
+        return false;
+    }
+    if (!state) {
+        fprintf(stderr, "Error: <state> is not initialized\n");
+        return false;
+    }
+    if (screen->name[0] == '\0') {
+        fprintf(stderr, "Error: <name> not provided\n");
+    }
+    if (!set_table(&state->screen_table, screen, screen->name)) {
+        fprintf(stderr, "Error: Failed to add screen \"%s\"\n", screen->name);
+        return false;
+    }
+    return true;
+}
+
+bool set_current_screen(FloraApplicationState *state, const char *name) {
+    if (!state) {
+        fprintf(stderr, "Error: <state> is not initialized\n");
+        return false;
+    }
+    if (name[0] == '\0') {
+        fprintf(stderr, "Error: <name> not provided\n");
+        return false;
+    }
+
+    void *temp = NULL;
+    const bool screen_exists = get_table(&state->screen_table, &temp, name);
+    if (!screen_exists) {
+        fprintf(stderr, "Error: Could not find screen \"%s\"\n", name);
+        return false;
+    }
+    if (temp == NULL) {
+        fprintf(stderr, "Error: Could not find screen \"%s\"\n", name);
+        return false;
+    }
+
+    if (state->current_screen && state->current_screen->on_destroy_screen) {
+        state->current_screen->on_destroy_screen(state, state->current_screen);
+    }
+
+    state->current_screen = (FloraScreen *) temp;
+    if (state->current_screen->on_create_screen) {
+        state->current_screen->on_create_screen(state, state->current_screen);
+    }
     return true;
 }

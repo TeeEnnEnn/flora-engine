@@ -5,7 +5,9 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <stdint.h>
 
+#include "flora_constants.h"
 #include "flora_widgets.h"
+#include "table.h"
 
 struct FloraApplicationState {
     SDL_Window *window;
@@ -20,21 +22,21 @@ struct FloraApplicationState {
     int window_height;
     bool running;
     EventQueue event_queue;
+    Table screen_table;
     FloraScreen *current_screen;
 };
 
-struct FloraScreen {
-    void (*on_screen_create)(FloraApplicationState *state, FloraScreen *screen);
-    void (*on_screen_destroy)(FloraApplicationState *state, FloraScreen *screen);
+typedef void (*on_create_screen)(FloraApplicationState *state, FloraScreen *screen);
 
+typedef void (*on_destroy_screen)(FloraApplicationState *state, FloraScreen *screen);
+
+struct FloraScreen {
+    on_create_screen on_create_screen;
+    on_destroy_screen on_destroy_screen;
     FloraWidget **widgets;
     int widget_count;
     int widget_capacity;
-    // TODO: Allow for multiple screens
-    // int screen_id
-    // char* screen_name
-    // int screen_name_length
-    // FloraScreen* next_screen;
+    char name[TABLE_KEY_LENGTH];
 };
 
 
@@ -45,5 +47,22 @@ bool destroy_application(FloraApplicationState *state);
 bool create_window(FloraApplicationState *state, const char *title);
 
 bool destroy_window(FloraApplicationState *state);
+
+/**
+ * Set a named screen as the current screen
+ * @param state The flora application state
+ * @param name The name of the screen to set as current
+ * @return true if the named screen is set as current, false otherwise
+ */
+bool set_current_screen(FloraApplicationState *state, const char *name);
+
+
+/**
+ * Add a screen to the application state
+ * @param state The flora application state
+ * @param screen The new screen to be added to the state's screen table
+ * @return true if the screen is added successfully, false otherwise
+ */
+bool add_screen(FloraApplicationState *state, FloraScreen *screen);
 
 #endif //FLORA_APPS_H

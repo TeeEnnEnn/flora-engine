@@ -5,7 +5,7 @@
 #include "flora_apps.h"
 #include "flora_constants.h"
 
-bool init_event_queue(EventQueue *queue, int capacity) {
+bool init_event_queue(EventQueue *queue, const int capacity) {
     if (!queue) {
         fprintf(stderr, "Error: Event queue is not initialized\n");
         return false;
@@ -72,7 +72,9 @@ bool enqueue_event(EventQueue *queue, FloraEvent *event) {
     }
     queue->events[queue->back] = event;
     queue->back = next_back;
+#ifdef EVENT_LOGS
     printf("Log: Event enqueued successfully\n");
+#endif
     return true;
 }
 
@@ -87,7 +89,9 @@ bool dequeue_event(EventQueue *queue, FloraEvent **event) {
     }
     *event = queue->events[queue->front];
     queue->front = (queue->front + 1) % queue->capacity;
+#ifdef EVENT_LOGS
     printf("Log: Event dequeued successfully\n");
+#endif
     return true;
 }
 
@@ -105,7 +109,10 @@ bool destroy_event(FloraEvent *event) {
         return false;
     }
     free(event);
+#ifdef EVENT_LOGS
     printf("Log: Event destroyed successfully\n");
+#endif
+
     return true;
 }
 

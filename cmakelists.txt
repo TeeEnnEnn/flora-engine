@@ -14,12 +14,13 @@ find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_ttf REQUIRED CONFIG)
 
 set(SOURCES
-    "src/flora_events.c"
-    "src/flora_fonts.c"
-    "src/flora_screens.c"
-    "src/flora_widgets.c"
-    "src/flora_apps.c"
-    "src/main.c"
+        "src/flora_events.c"
+        "src/flora_fonts.c"
+        "src/flora_screens.c"
+        "src/flora_widgets.c"
+        "src/flora_apps.c"
+        "src/main.c"
+        "src/table.c"
 )
 
 #TODO: Change this depending on your system

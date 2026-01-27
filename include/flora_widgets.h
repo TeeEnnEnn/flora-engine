@@ -129,8 +129,17 @@ FLORA_WIDTH(FIXED, value)
 #define FLORA_WIDTH_GROW(value) \
 FLORA_WIDTH(GROW, value)
 
+#define PADDING(value) \
+.top = (value), .bottom = (value), .left = (value), .right = (value)
 
-bool destroy_flora_widget(FloraWidget *widget);
+#define PADDING_Y(value) \
+.top = (value), .bottom = (value)
+
+#define PADDING_X(value) \
+.left = (value), .right = (value)
+
+
+bool cleanup_widget(FloraWidget *widget);
 
 bool widget_contains_point(FloraWidget *widget, int x, int y);
 

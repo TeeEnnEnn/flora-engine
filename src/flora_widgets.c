@@ -433,17 +433,30 @@ bool widget_contains_point(FloraWidget *widget, const int x, const int y) {
            y >= widget->style.position.y && y < widget->style.position.y + widget->style.sizing.height.value;
 }
 
-bool destroy_flora_widget(FloraWidget *widget) {
+bool cleanup_widget(FloraWidget *widget) {
     if (!widget) {
         return false;
     }
 
-    for (int i = 0; i < widget->child_count; i++) {
-        FloraWidget *child = widget->children[i];
-        if (child) {
-            destroy_flora_widget(child);
-        }
+    switch (widget->type) {
+        case FLORA_TEXT:
+            if (widget->as.text.length > 0 && widget->as.text.content) {
+                free(widget->as.text.content);
+            }
+            if (widget->as.text.texture) {
+                SDL_DestroyTexture(widget->as.text.texture);
+            }
+            if (widget->as.text.surface) {
+                SDL_DestroySurface(widget->as.text.surface);
+            }
+            break;
+        case FLORA_BOX:
+            break;
     }
-    free(widget->children);
+
+    if (widget->children) {
+        free(widget->children);
+        widget->children = NULL;
+    }
     return true;
 }

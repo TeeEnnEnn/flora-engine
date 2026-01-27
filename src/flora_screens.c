@@ -5,22 +5,31 @@
 #include "flora_constants.h"
 #include "flora_fonts.h"
 
-void base_screen_destroy(FloraApplicationState *state, FloraScreen *screen) {
+void change_screen_to_demo(FloraWidget *widget, FloraApplicationState *state) {
+    if (!set_current_screen(state, "demo")) {
+        printf("Log: Error: Could not change screen to demo.\n");
+    };
+    printf("Tried to change current screen\n");
+}
+
+FloraScreen *create_screen(const char *name, const on_create_screen on_create_screen,
+                           const on_destroy_screen on_destroy_screen) {
+    FloraScreen *screen = calloc(1, sizeof(FloraScreen));
     if (!screen) {
-        fprintf(stderr, "Error: Screen is not initialized\n");
-        return;
+        fprintf(stderr, "Error: Failed to allocate screen\n");
+        return NULL;
     }
-    if (screen->widgets) {
-        for (int i = 0; i < screen->widget_count; i++) {
-            destroy_flora_widget(screen->widgets[i]);
-        }
-        free(screen->widgets);
-        screen->widgets = NULL;
-        screen->widget_count = 0;
-        printf("Log: Screen destroyed successfully\n");
+    strcpy(screen->name, name);
+    screen->on_create_screen = on_create_screen ? on_create_screen : NULL;
+    screen->on_destroy_screen = on_destroy_screen ? on_destroy_screen : NULL;
+    screen->widget_capacity = INITIAL_WIDGET_CAPACITY;
+    screen->widget_count = 0;
+    screen->widgets = calloc(screen->widget_capacity, sizeof(FloraWidget *));
+    if (!screen->widgets) {
+        fprintf(stderr, "Error: Failed to allocate screen widgets\n");
+        return NULL;
     }
-    screen->on_screen_destroy = NULL;
-    screen->on_screen_create = NULL;
+    return screen;
 }
 
 void update_screen(FloraScreen *screen, FloraApplicationState *state) {
@@ -46,7 +55,7 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state) {
                 }
                 case FLORA_MOUSE_DOWN: {
                     // Do this backwards, last rendered is first to receive
-                    for (int i = screen->widget_count-1; i > -1; i--) {
+                    for (int i = screen->widget_count - 1; i > -1; i--) {
                         FloraWidget *widget = screen->widgets[i];
                         if (widget->is_visible && widget->callbacks.on_mouse_down
                             && widget_contains_point(widget, (int) event->as.mouse_button.x,
@@ -102,7 +111,7 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state) {
     }
 }
 
-void demo_screen_create(FloraApplicationState *state, FloraScreen *screen) {
+void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
     TTF_Font *font = add_font(state, OPEN_SANS_FONT_PATH, 18);
     TTF_Font *title_font = add_font(state, OPEN_SANS_FONT_PATH, 32);
 
@@ -247,7 +256,7 @@ void demo_screen_create(FloraApplicationState *state, FloraScreen *screen) {
                 .font_size = 18
             },
             (FloraWidgetCallbacks){.render = base_text_widget_render},
-            true, (char *) button_labels[i], (int)strlen(button_labels[i]), font
+            true, (char *) button_labels[i], (int) strlen(button_labels[i]), font
         );
 
         add_child_widget(button, buttonText);
@@ -514,7 +523,6 @@ void demo_screen_create(FloraApplicationState *state, FloraScreen *screen) {
     add_child_widget(mainContainer, footer);
 }
 
-
 void render_screen(FloraScreen *screen, FloraApplicationState *state) {
     if (!screen || !state) {
         fprintf(stderr, "Error: Invalid screen or state.\n");
@@ -529,7 +537,27 @@ void render_screen(FloraScreen *screen, FloraApplicationState *state) {
     }
 }
 
-void base_screen_create(FloraApplicationState *state, FloraScreen *screen) {
+void base_destroy_screen(FloraApplicationState *state, FloraScreen *screen) {
+    if (!screen) {
+        fprintf(stderr, "Error: Screen is not initialized\n");
+        return;
+    }
+    if (screen->widgets) {
+        for (int i = 0; i < screen->widget_count; i++) {
+            cleanup_widget(screen->widgets[i]);
+            free(screen->widgets[i]);
+            screen->widgets[i] = NULL;
+        }
+        free(screen->widgets);
+        screen->widgets = NULL;
+        screen->widget_count = 0;
+        printf("Log: Screen destroyed successfully\n");
+    }
+    screen->on_destroy_screen = NULL;
+    screen->on_create_screen = NULL;
+}
+
+void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
     FloraWidget *baseWidget = create_box_widget(
         state,
         NULL,
@@ -677,19 +705,27 @@ void base_screen_create(FloraApplicationState *state, FloraScreen *screen) {
                                              }, (FloraWidgetCallbacks){.render = base_text_widget_render}, true,
                                              "Hello World.", 13, font);
     add_child_widget(child1, child5);
-}
 
-
-bool init_flora_screen(FloraScreen *screen, FloraApplicationState *state) {
-    screen->on_screen_create = demo_screen_create; // TODO: change this for a different demo
-    screen->on_screen_destroy = base_screen_destroy;
-    screen->widget_count = 0;
-    screen->widget_capacity = INITIAL_WIDGET_CAPACITY;
-    screen->widgets = (FloraWidget **) malloc(screen->widget_capacity * sizeof(FloraWidget *));
-    if (!screen->widgets) {
-        printf("Log: Failed to allocate memory for scene widgets. Aborting!\n");
-        fprintf(stderr, "Error: Failed to allocate memory for scene widgets.\n");
-        return false;
-    }
-    return true;
+    FloraWidget *next_screen_button = create_box_widget(state, NULL, (FloraWidgetStyle){
+                                                            .position = (FloraPosition){.x = 25, .y = 25},
+                                                            .sizing = {
+                                                                .width = FLORA_WIDTH_GROW(176),
+                                                                .height = FLORA_HEIGHT_GROW(48)
+                                                            },
+                                                            .text_colour = FLORA_WHITE, .font_size = 24,
+                                                            .border_colour = FLORA_WHITE,
+                                                            .inner_colour = FLORA_GRAY_900,
+                                                            .padding = {PADDING(5)}
+                                                        },
+                                                        (FloraWidgetCallbacks){
+                                                            .on_destroy = NULL,
+                                                            .on_mouse_down = change_screen_to_demo,
+                                                            .update = base_box_widget_update,
+                                                            .render = base_box_widget_render,
+                                                        }, true);
+    FloraWidget *next_screen_button_text = create_text_widget(state, next_screen_button,
+                                                              (FloraWidgetStyle){.text_colour = FLORA_WHITE},
+                                                              (FloraWidgetCallbacks){}, true, "Next Screen",
+                                                              12, font);
+    add_child_widget(next_screen_button, next_screen_button_text);
 }
