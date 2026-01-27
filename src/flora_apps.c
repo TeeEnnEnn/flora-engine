@@ -58,15 +58,19 @@ bool init_application(FloraApplicationState *state, const char *title, const int
         return false;
     }
 
-    FloraScreen *base_screen = create_screen(INITIAL_SCREEN_NAME, NULL, NULL);
+    FloraScreen *base_screen = create_screen(INITIAL_SCREEN_NAME, base_create_screen, base_destroy_screen);
+    FloraScreen *demo_screen = create_screen("demo", demo_create_screen, base_destroy_screen);
     if (!base_screen) {
-        fprintf(stderr, "Error: Failed to create screen\n");
+        fprintf(stderr, "Error: Failed to create base screen\n");
         return false;
     }
-    base_screen->on_create_screen = base_create_screen;
-    base_screen->on_destroy_screen = base_destroy_screen;
-    state->current_screen = base_screen;
 
+    if (!demo_screen) {
+        fprintf(stderr, "Error: Failed to create demo screen\n");
+        return false;
+    }
+
+    state->current_screen = base_screen;
     if (!init_table(&state->screen_table, INITIAL_TABLE_CAPACITY)) {
         fprintf(stderr, "Error: Failed to initialize screen table\n");
         return false;
@@ -74,6 +78,10 @@ bool init_application(FloraApplicationState *state, const char *title, const int
 
     if (!add_screen(state, state->current_screen)) {
         fprintf(stderr, "Error: Failed to add %s \n", state->current_screen->name);
+        return false;
+    }
+    if (!add_screen(state, demo_screen)) {
+        fprintf(stderr, "Error: Failed to add %s \n", demo_screen->name);
         return false;
     }
 
@@ -96,12 +104,16 @@ bool init_application(FloraApplicationState *state, const char *title, const int
 
 bool destroy_application(FloraApplicationState *state) {
     destroy_fonts(state);
-    for (int i = 0; i < INITIAL_TABLE_CAPACITY; i++) {
-        FloraScreen *screen = (FloraScreen *) state->screen_table.entries[i].element;
-        if (!screen || !screen->on_destroy_screen) {
-            continue;
-        }
+    int freed = 0;
+    for (int i = 0; i < state->screen_table.capacity; i++) {
+        FloraScreen *screen = state->screen_table.entries[i].element;
+        if (!screen || !screen->on_destroy_screen) continue;
         screen->on_destroy_screen(state, screen);
+        free(screen);
+        freed++;
+        if (freed == state->screen_table.count) {
+            break;
+        }
     }
 
     if (!destroy_window(state)) {
@@ -157,7 +169,14 @@ bool set_current_screen(FloraApplicationState *state, const char *name) {
         fprintf(stderr, "Error: Could not find screen \"%s\"\n", name);
         return false;
     }
+
+    if (state->current_screen && state->current_screen->on_destroy_screen) {
+        state->current_screen->on_destroy_screen(state, state->current_screen);
+    }
+
     state->current_screen = (FloraScreen *) temp;
-    state->current_screen->on_create_screen(state, state->current_screen);
+    if (state->current_screen->on_create_screen) {
+        state->current_screen->on_create_screen(state, state->current_screen);
+    }
     return true;
 }

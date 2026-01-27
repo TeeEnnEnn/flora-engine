@@ -111,7 +111,7 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state) {
     }
 }
 
-void demo_screen_create(FloraApplicationState *state, FloraScreen *screen) {
+void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
     TTF_Font *font = add_font(state, OPEN_SANS_FONT_PATH, 18);
     TTF_Font *title_font = add_font(state, OPEN_SANS_FONT_PATH, 32);
 
@@ -544,8 +544,9 @@ void base_destroy_screen(FloraApplicationState *state, FloraScreen *screen) {
     }
     if (screen->widgets) {
         for (int i = 0; i < screen->widget_count; i++) {
-            destroy_flora_widget(screen->widgets[i]);
+            cleanup_widget(screen->widgets[i]);
             free(screen->widgets[i]);
+            screen->widgets[i] = NULL;
         }
         free(screen->widgets);
         screen->widgets = NULL;
@@ -557,14 +558,6 @@ void base_destroy_screen(FloraApplicationState *state, FloraScreen *screen) {
 }
 
 void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
-    // make demo screen
-
-    FloraScreen *demo_screen = create_screen("demo", demo_screen_create, base_destroy_screen);
-    if (!add_screen(state, demo_screen)) {
-        fprintf(stderr, "Error: Could not add demo screen.\n");
-    }
-
-
     FloraWidget *baseWidget = create_box_widget(
         state,
         NULL,

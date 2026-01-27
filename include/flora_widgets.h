@@ -139,7 +139,7 @@ FLORA_WIDTH(GROW, value)
 .left = (value), .right = (value)
 
 
-bool destroy_flora_widget(FloraWidget *widget);
+bool cleanup_widget(FloraWidget *widget);
 
 bool widget_contains_point(FloraWidget *widget, int x, int y);
 

@@ -15,5 +15,7 @@ void base_destroy_screen(FloraApplicationState *state, FloraScreen *screen);
 
 void base_create_screen(FloraApplicationState *state, FloraScreen *screen);
 
+void demo_create_screen(FloraApplicationState *state, FloraScreen *screen);
+
 
 #endif //FLORA_SCREENS_H
