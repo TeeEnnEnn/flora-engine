@@ -214,6 +214,13 @@ static void render_widget(FloraWidget *widget, FloraApplicationState *state) {
             }
             break;
         }
+        case FLORA_IMAGE: {
+            SDL_RenderTexture(state->renderer, widget->as.image.texture, NULL, &(SDL_FRect){
+                                  widget->style.position.x, widget->style.position.y, widget->style.sizing.width.value,
+                                  widget->style.sizing.height.value
+                              });
+            break;
+        }
     }
 }
 
@@ -323,20 +330,14 @@ FloraWidget *create_text_widget(FloraApplicationState *state, FloraWidget *paren
         return NULL;
     }
 
-    // Safely take ownership of string
-    char *string = NULL;
-    if (length > 0) {
-        string = malloc(sizeof(char) * length);
-        if (!string) {
-            fprintf(stderr, "Error: Could not allocate memory for string.\n");
-            SDL_DestroyTexture(texture);
-            SDL_DestroySurface(surface);
-            return NULL;
-        }
-        memcpy(string, text, length); // length should include '\0' terminator
-    } else {
-        string = (char *) text;
+    const int actual_length = (length > 0) ? length : (int)(strlen(text) + 1);
+
+    char *string = malloc(sizeof(char) * actual_length);
+    if (!string) {
+        fprintf(stderr, "Error: Could not allocate memory for string.\n");
+        return NULL;
     }
+    memcpy(string, text, actual_length);
 
     FloraWidget *new_widget = calloc(1, sizeof(FloraWidget));
     if (!new_widget) {
@@ -365,6 +366,83 @@ FloraWidget *create_text_widget(FloraApplicationState *state, FloraWidget *paren
     screen->widgets[screen->widget_count - 1] = new_widget;
     return new_widget;
 }
+
+FloraWidget *create_image_widget(FloraApplicationState *state, FloraWidget *parent, FloraWidgetStyle style,
+                                 const FloraWidgetCallbacks callbacks, const bool is_visible, char *image_src,
+                                 int length) {
+    if (!state) {
+        fprintf(stderr, "Error: Widget create got invalid application state.\n");
+        return NULL;
+    }
+    FloraScreen *screen = state->current_screen;
+    if (!screen) {
+        fprintf(stderr, "Error: No valid screen found to add widgets to.\n");
+        return NULL;
+    }
+
+    if (screen->widget_count == screen->widget_capacity) {
+        FloraWidget **new_widgets = realloc(screen->widgets,
+                                            screen->widget_capacity * GROWTH_FACTOR * sizeof(FloraWidget));
+        if (!new_widgets) {
+            fprintf(stderr, "Error: Could not reallocate widgets.\n");
+            return NULL;
+        }
+        screen->widgets = new_widgets;
+        screen->widget_capacity = screen->widget_capacity * GROWTH_FACTOR;
+    }
+
+    const int actual_length = (length > 0) ? length : (int)(strlen(image_src) + 1);
+
+    char *string = malloc(sizeof(char) * actual_length);
+    if (!string) {
+        fprintf(stderr, "Error: Could not allocate memory for string.\n");
+        return NULL;
+    }
+    memcpy(string, image_src, actual_length);
+
+    SDL_Surface *surface = IMG_Load(string);
+    if (!surface) {
+        fprintf(stderr, "Error: Could not load image '%s': %s\n", string, SDL_GetError());
+        free(string);
+        return NULL;
+    }
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(state->renderer, surface);
+    if (!texture) {
+        fprintf(stderr, "Error: Could not create texture: %s\n", SDL_GetError());
+        SDL_DestroySurface(surface);
+        free(string);
+        return NULL;
+    }
+
+    FloraWidget *new_widget = calloc(1, sizeof(FloraWidget));
+    if (!new_widget) {
+        fprintf(stderr, "Error: Could not allocate memory for new widget.\n");
+        SDL_DestroyTexture(texture);
+        SDL_DestroySurface(surface);
+        free(string);
+        return NULL;
+    }
+
+    new_widget->id = screen->widget_count++;
+    new_widget->is_visible = is_visible;
+    new_widget->style = style;
+    new_widget->callbacks = callbacks;
+    new_widget->child_capacity = INITIAL_CHILD_WIDGET_CAPACITY;
+    new_widget->parent = parent;
+    new_widget->children = NULL;
+    new_widget->child_count = 0;
+    new_widget->type = FLORA_IMAGE;
+
+    new_widget->as.image.surface = surface;
+    new_widget->as.image.texture = texture;
+    new_widget->as.image.image_src = string;
+    new_widget->as.image.length = actual_length;
+
+    screen->widgets[screen->widget_count - 1] = new_widget;
+    return new_widget;
+}
+
 
 bool add_child_widget(FloraWidget *widget, FloraWidget *child) {
     if (!widget) {
@@ -399,7 +477,7 @@ bool add_child_widget(FloraWidget *widget, FloraWidget *child) {
     return true;
 }
 
-void base_box_widget_render(FloraWidget *widget, FloraApplicationState *state) {
+void base_widget_render(FloraWidget *widget, FloraApplicationState *state) {
     if (!widget || !widget->is_visible) {
         return;
     }
@@ -408,10 +486,6 @@ void base_box_widget_render(FloraWidget *widget, FloraApplicationState *state) {
     calc_grow_sizing(widget);
     calc_child_positions(widget);
     render_widget(widget, state);
-}
-
-void base_box_widget_update(FloraWidget *widget, FloraApplicationState *state) {
-    (void) widget;
 }
 
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state) {
@@ -440,7 +514,7 @@ bool cleanup_widget(FloraWidget *widget) {
 
     switch (widget->type) {
         case FLORA_TEXT:
-            if (widget->as.text.length > 0 && widget->as.text.content) {
+            if (widget->as.text.content) {
                 free(widget->as.text.content);
             }
             if (widget->as.text.texture) {
@@ -452,6 +526,18 @@ bool cleanup_widget(FloraWidget *widget) {
             break;
         case FLORA_BOX:
             break;
+        case FLORA_IMAGE: {
+            if (widget->as.image.texture) {
+                SDL_DestroyTexture(widget->as.image.texture);
+            }
+            if (widget->as.image.surface) {
+                SDL_DestroySurface(widget->as.image.surface);
+            }
+            if (widget->as.image.image_src) {
+                free(widget->as.image.image_src);
+            }
+            break;
+        }
     }
 
     if (widget->children) {

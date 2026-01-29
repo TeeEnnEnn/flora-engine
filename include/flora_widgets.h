@@ -2,13 +2,15 @@
 #define FLORA_WIDGETS_H
 
 #include <stdbool.h>
+#include "SDL3/SDL_surface.h"
 #include "flora_colours.h"
 #include "flora_events.h"
 #include "flora_fonts.h"
 
 typedef enum {
     FLORA_BOX,
-    FLORA_TEXT
+    FLORA_TEXT,
+    FLORA_IMAGE,
 } FloraWidgetType;
 
 typedef struct {
@@ -102,6 +104,13 @@ struct FloraWidget {
             SDL_Surface *surface;
             SDL_Texture *texture;
         } text;
+
+        struct {
+            SDL_Texture *texture;
+            SDL_Surface *surface;
+            char *image_src;
+            int length;
+        } image;
     } as;
 };
 
@@ -143,9 +152,12 @@ bool cleanup_widget(FloraWidget *widget);
 
 bool widget_contains_point(FloraWidget *widget, int x, int y);
 
-void base_box_widget_render(FloraWidget *widget, FloraApplicationState *state);
+void base_widget_render(FloraWidget *widget, FloraApplicationState *state);
 
-void base_box_widget_update(FloraWidget *widget, FloraApplicationState *state);
+
+FloraWidget *create_image_widget(FloraApplicationState *state, FloraWidget *parent, FloraWidgetStyle style,
+                                 const FloraWidgetCallbacks callbacks, const bool is_visible, char *image_src,
+                                 int length);
 
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state);
 

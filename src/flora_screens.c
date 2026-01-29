@@ -133,7 +133,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = NULL,
             .on_destroy = NULL
         },
@@ -158,7 +158,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -211,7 +211,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = NULL,
             .on_destroy = NULL
         },
@@ -240,7 +240,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             },
             (FloraWidgetCallbacks){
                 .update = NULL,
-                .render = base_box_widget_render,
+                .render = base_widget_render,
                 .on_mouse_down = base_box_widget_on_mouse_down,
                 .on_destroy = NULL
             },
@@ -283,7 +283,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = NULL,
             .on_destroy = NULL
         },
@@ -308,7 +308,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -336,7 +336,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             },
             (FloraWidgetCallbacks){
                 .update = NULL,
-                .render = base_box_widget_render,
+                .render = base_widget_render,
                 .on_mouse_down = base_box_widget_on_mouse_down,
                 .on_destroy = NULL
             },
@@ -379,7 +379,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -403,7 +403,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -443,7 +443,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -468,7 +468,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             },
             (FloraWidgetCallbacks){
                 .update = NULL,
-                .render = base_box_widget_render,
+                .render = base_widget_render,
                 .on_mouse_down = base_box_widget_on_mouse_down,
                 .on_destroy = NULL
             },
@@ -500,7 +500,7 @@ void demo_create_screen(FloraApplicationState *state, FloraScreen *screen) {
         },
         (FloraWidgetCallbacks){
             .update = NULL,
-            .render = base_box_widget_render,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -558,6 +558,32 @@ void base_destroy_screen(FloraApplicationState *state, FloraScreen *screen) {
 }
 
 void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
+    FloraWidget *image_widget = create_image_widget(
+        state,
+        NULL,
+        (FloraWidgetStyle){
+            .inner_colour = FLORA_WHITE,
+            .border_colour = FLORA_BLACK,
+            .padding = {PADDING_X(12), PADDING_Y(12)},
+            .gap = (FloraGap){0, 0},
+            .layout_direction = LEFT_TO_RIGHT,
+            .sizing = (FloraSizing){
+                .width = FLORA_WIDTH_FIXED(500),
+                .height = FLORA_HEIGHT_FIT(500)
+            },
+            .position = (FloraPosition){.x = 0, .y = 0}
+        },
+        (FloraWidgetCallbacks){
+            .update = NULL,
+            .render = base_widget_render,
+            .on_mouse_down = NULL,
+            .on_destroy = NULL
+        },
+        true,
+        "D:\\flora-engine\\assets\\cat.jpg",
+        -1
+    );
+
     FloraWidget *baseWidget = create_box_widget(
         state,
         NULL,
@@ -579,8 +605,8 @@ void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             .position = (FloraPosition){.x = 100, .y = 100}
         },
         (FloraWidgetCallbacks){
-            .update = base_box_widget_update,
-            .render = base_box_widget_render,
+            .update = NULL,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -603,8 +629,8 @@ void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             .position = (FloraPosition){.x = 50, .y = 50}
         },
         (FloraWidgetCallbacks){
-            .update = base_box_widget_update,
-            .render = base_box_widget_render,
+            .update = NULL,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -632,8 +658,8 @@ void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             .position = (FloraPosition){.x = 50, .y = 50}
         },
         (FloraWidgetCallbacks){
-            .update = base_box_widget_update,
-            .render = base_box_widget_render,
+            .update = NULL,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -656,8 +682,8 @@ void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             .position = (FloraPosition){.x = 50, .y = 50}
         },
         (FloraWidgetCallbacks){
-            .update = base_box_widget_update,
-            .render = base_box_widget_render,
+            .update = NULL,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -680,8 +706,8 @@ void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
             .position = (FloraPosition){.x = 50, .y = 50}
         },
         (FloraWidgetCallbacks){
-            .update = base_box_widget_update,
-            .render = base_box_widget_render,
+            .update = NULL,
+            .render = base_widget_render,
             .on_mouse_down = base_box_widget_on_mouse_down,
             .on_destroy = NULL
         },
@@ -720,8 +746,8 @@ void base_create_screen(FloraApplicationState *state, FloraScreen *screen) {
                                                         (FloraWidgetCallbacks){
                                                             .on_destroy = NULL,
                                                             .on_mouse_down = change_screen_to_demo,
-                                                            .update = base_box_widget_update,
-                                                            .render = base_box_widget_render,
+                                                            .update = NULL,
+                                                            .render = base_widget_render,
                                                         }, true);
     FloraWidget *next_screen_button_text = create_text_widget(state, next_screen_button,
                                                               (FloraWidgetStyle){.text_colour = FLORA_WHITE},
