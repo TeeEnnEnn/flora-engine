@@ -179,14 +179,14 @@ static void calc_grow_sizing(const FloraWidget *widget) {
     calc_grow_sizing_top_to_bottom(widget);
 }
 
-static void render_widget(FloraWidget *widget, FloraApplicationState *state) {
-    if (!widget || !widget->is_visible) {
+static void render_widget(FloraWidget *widget, FloraWindow *window) {
+    if (!widget || !widget->is_visible || !window) {
         return;
     }
 
     switch (widget->type) {
         case FLORA_TEXT: {
-            SDL_RenderTexture(state->renderer, widget->as.text.texture, NULL, &(SDL_FRect){
+            SDL_RenderTexture(window->renderer, widget->as.text.texture, NULL, &(SDL_FRect){
                                   widget->style.position.x, widget->style.position.y, widget->style.sizing.width.value,
                                   widget->style.sizing.height.value
                               });
@@ -196,20 +196,20 @@ static void render_widget(FloraWidget *widget, FloraApplicationState *state) {
             const FloraWidgetStyle style = widget->style;
             const FloraPosition position = widget->style.position;
 
-            SDL_SetRenderDrawColor(state->renderer, style.inner_colour.r, style.inner_colour.g, style.inner_colour.b,
+            SDL_SetRenderDrawColor(window->renderer, style.inner_colour.r, style.inner_colour.g, style.inner_colour.b,
                                    style.inner_colour.a);
             const SDL_FRect rect = {
                 position.x, position.y, widget->style.sizing.width.value, widget->style.sizing.height.value
             };
-            SDL_RenderFillRect(state->renderer, &rect);
-            SDL_SetRenderDrawColor(state->renderer, style.border_colour.r, style.border_colour.g, style.border_colour.b,
+            SDL_RenderFillRect(window->renderer, &rect);
+            SDL_SetRenderDrawColor(window->renderer, style.border_colour.r, style.border_colour.g, style.border_colour.b,
                                    style.border_colour.a);
-            SDL_RenderRect(state->renderer, &rect);
+            SDL_RenderRect(window->renderer, &rect);
 
             for (int i = 0; i < widget->child_count; i++) {
                 FloraWidget *child = widget->children[i];
                 if (child && child->is_visible) {
-                    render_widget(child, state);
+                    render_widget(child, window);
                 }
             }
             break;
@@ -217,11 +217,11 @@ static void render_widget(FloraWidget *widget, FloraApplicationState *state) {
     }
 }
 
-void base_text_widget_render(FloraWidget *widget, FloraApplicationState *state) {
+void base_text_widget_render(FloraWidget *widget, FloraWindow *window) {
     if (!widget || !widget->is_visible) {
         return;
     }
-    render_widget(widget, state);
+    render_widget(widget, window);
 }
 
 FloraWidget *create_box_widget(FloraApplicationState *state, FloraWidget *parent,
@@ -232,7 +232,11 @@ FloraWidget *create_box_widget(FloraApplicationState *state, FloraWidget *parent
         fprintf(stderr, "Error: Widget create got invalid application state.");
         return NULL;
     }
-    FloraScreen *screen = state->current_screen;
+    if (!state->current_window) {
+        fprintf(stderr, "Error: No valid window found to add widgets to.");
+        return NULL;
+    }
+    FloraScreen *screen = state->current_window->current_screen;
     if (!screen) {
         fprintf(stderr, "Error: No valid screen found to add widgets to.");
         return NULL;
@@ -279,7 +283,11 @@ FloraWidget *create_text_widget(FloraApplicationState *state, FloraWidget *paren
         fprintf(stderr, "Error: Widget create got invalid application state.\n");
         return NULL;
     }
-    FloraScreen *screen = state->current_screen;
+    if (!state->current_window) {
+        fprintf(stderr, "Error: No valid window found to add widgets to.\n");
+        return NULL;
+    }
+    FloraScreen *screen = state->current_window->current_screen;
     if (!screen) {
         fprintf(stderr, "Error: No valid screen found to add widgets to.\n");
         return NULL;
@@ -316,7 +324,7 @@ FloraWidget *create_text_widget(FloraApplicationState *state, FloraWidget *paren
     style.sizing.width.value = (float) surface->w;
     style.sizing.height.value = (float) surface->h;
 
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(state->renderer, surface);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(state->current_window->renderer, surface);
 
     if (!texture) {
         fprintf(stderr, "Error: SDL_CreateTextureFromSurface failed.\n");
@@ -399,7 +407,7 @@ bool add_child_widget(FloraWidget *widget, FloraWidget *child) {
     return true;
 }
 
-void base_box_widget_render(FloraWidget *widget, FloraApplicationState *state) {
+void base_box_widget_render(FloraWidget *widget, FloraWindow *window) {
     if (!widget || !widget->is_visible) {
         return;
     }
@@ -407,11 +415,12 @@ void base_box_widget_render(FloraWidget *widget, FloraApplicationState *state) {
     calc_widget_dimensions(widget);
     calc_grow_sizing(widget);
     calc_child_positions(widget);
-    render_widget(widget, state);
+    render_widget(widget, window);
 }
 
 void base_box_widget_update(FloraWidget *widget, FloraApplicationState *state) {
     (void) widget;
+    (void) state;
 }
 
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state) {

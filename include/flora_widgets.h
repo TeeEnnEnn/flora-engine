@@ -67,7 +67,7 @@ typedef struct FloraWidget FloraWidget;
 
 typedef void (*widget_update)(FloraWidget *widget, FloraApplicationState *state);
 
-typedef void (*widget_render)(FloraWidget *widget, FloraApplicationState *state);
+typedef void (*widget_render)(FloraWidget *widget, FloraWindow *window);
 
 typedef void (*widget_on_mouse_down)(FloraWidget *widget, FloraApplicationState *state);
 
@@ -143,13 +143,13 @@ bool cleanup_widget(FloraWidget *widget);
 
 bool widget_contains_point(FloraWidget *widget, int x, int y);
 
-void base_box_widget_render(FloraWidget *widget, FloraApplicationState *state);
+void base_box_widget_render(FloraWidget *widget, FloraWindow *window);
 
 void base_box_widget_update(FloraWidget *widget, FloraApplicationState *state);
 
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state);
 
-void base_text_widget_render(FloraWidget *widget, FloraApplicationState *state);
+void base_text_widget_render(FloraWidget *widget, FloraWindow *window);
 
 FloraWidget *create_box_widget(FloraApplicationState *state, FloraWidget *parent,
                                FloraWidgetStyle style, FloraWidgetCallbacks callbacks,

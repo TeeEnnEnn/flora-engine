@@ -18,7 +18,7 @@ bool init_table(Table *table, const uint64_t capacity) {
     return true;
 }
 
-void destroy_table(Table *table) {
+void deinit_table(Table *table) {
     table->count = 0;
     table->capacity = 0;
     free(table->entries);

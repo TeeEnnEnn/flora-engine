@@ -6,6 +6,8 @@
 
 typedef struct FloraApplicationState FloraApplicationState;
 typedef struct FloraScreen FloraScreen;
+typedef struct FloraWindow FloraWindow;
+typedef struct FloraFont FloraFont;
 
 void get_input(FloraApplicationState *state);
 

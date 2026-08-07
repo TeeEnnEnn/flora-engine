@@ -22,22 +22,33 @@ FetchContent_Declare (
         GIT_SHALLOW TRUE
 )
 
-set(SOURCES
-        "src/flora_events.c"
-        "src/flora_fonts.c"
-        "src/flora_screens.c"
-        "src/flora_widgets.c"
-        "src/flora_apps.c"
-        "src/main.c"
-        "src/table.c"
+FetchContent_Declare (
+        SDL3_image
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
+        GIT_TAG bec9134a26c7d0f31b36d6083c25296e04cabff5 # Release 3.4.4
+        GIT_SHALLOW TRUE
 )
 
 FetchContent_MakeAvailable(
-        SDL3 SDL3_TTF
+        SDL3 SDL3_TTF SDL3_image
 )
 
-add_executable(flora-engine WIN32 ${SOURCES})
-target_include_directories(flora-engine PRIVATE "src/headers")
+set(LIB_SOURCES
+        "src/flora_events.c"
+        "src/flora_fonts.c"
+        "src/flora_main.c"
+        "src/flora_screens.c"
+        "src/flora_widgets.c"
+        "src/table.c"
+)
 
-target_link_libraries(flora-engine PRIVATE SDL3::SDL3)
-target_link_libraries(flora-engine PRIVATE SDL3_ttf::SDL3_ttf)
+add_library(flora_engine_lib STATIC ${LIB_SOURCES})
+set_target_properties(flora_engine_lib PROPERTIES OUTPUT_NAME flora)
+
+target_include_directories(flora_engine_lib PUBLIC include)
+target_include_directories(flora_engine_lib PRIVATE "src/headers")
+
+target_link_libraries(flora_engine_lib PUBLIC SDL3::SDL3 SDL3_ttf::SDL3_ttf)
+
+add_executable(flora_engine_demo WIN32 examples/basic_demo.c)
+target_link_libraries(flora_engine_demo PRIVATE flora_engine_lib)
