@@ -1,3 +1,5 @@
+#define EVENT_LOGS
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -5,7 +7,7 @@
 #include "flora_apps.h"
 #include "flora_constants.h"
 
-bool init_event_queue(EventQueue *queue, const int capacity) {
+bool init_event_queue(FloraEventQueue *queue, const int capacity) {
     if (!queue) {
         fprintf(stderr, "Error: Event queue is not initialized\n");
         return false;
@@ -19,10 +21,10 @@ bool init_event_queue(EventQueue *queue, const int capacity) {
     queue->front = 0;
     queue->back = 0;
     printf("Log: Event queue initialized successfully\n");
-    return true;
+    return FLORA_TRUE;
 }
 
-bool destroy_event_queue(EventQueue *queue) {
+bool destroy_event_queue(FloraEventQueue *queue) {
     if (!queue) {
         fprintf(stderr, "Error: Event queue is not initialized\n");
         return false;
@@ -40,10 +42,10 @@ bool destroy_event_queue(EventQueue *queue) {
     queue->front = 0;
     queue->capacity = 0;
     printf("Log: Event queue destroyed successfully\n");
-    return true;
+    return FLORA_TRUE;
 }
 
-bool enqueue_event(EventQueue *queue, FloraEvent *event) {
+bool enqueue_event(FloraEventQueue *queue, FloraEvent *event) {
     if (!queue || !event) {
         fprintf(stderr, "Error: Event queue or event is not initialized\n");
         return false;
@@ -75,10 +77,10 @@ bool enqueue_event(EventQueue *queue, FloraEvent *event) {
 #ifdef EVENT_LOGS
     printf("Log: Event enqueued successfully\n");
 #endif
-    return true;
+    return FLORA_TRUE;
 }
 
-bool dequeue_event(EventQueue *queue, FloraEvent **event) {
+bool dequeue_event(FloraEventQueue *queue, FloraEvent **event) {
     if (!queue || !event) {
         fprintf(stderr, "Error: Event queue or event is not initialized\n");
         return false;
@@ -92,10 +94,10 @@ bool dequeue_event(EventQueue *queue, FloraEvent **event) {
 #ifdef EVENT_LOGS
     printf("Log: Event dequeued successfully\n");
 #endif
-    return true;
+    return FLORA_TRUE;
 }
 
-bool is_event_queue_empty(EventQueue *queue) {
+bool is_event_queue_empty(FloraEventQueue *queue) {
     if (!queue) {
         fprintf(stderr, "Error: Event queue is not initialized\n");
         return false;
@@ -113,7 +115,7 @@ bool destroy_event(FloraEvent *event) {
     printf("Log: Event destroyed successfully\n");
 #endif
 
-    return true;
+    return FLORA_TRUE;
 }
 
 static FloraEvent *new_flora_event(SDL_Event *sdl_event) {

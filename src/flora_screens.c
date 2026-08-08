@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "flora_apps.h"
 #include "flora_screens.h"
 #include "flora_constants.h"
+#include "flora_events.h"
+#include "flora_widgets.h"
 
 FloraScreen *create_screen(const char *name, const on_init_screen on_init_screen,
                            const on_deinit_screen on_deinit_screen) {
@@ -120,7 +123,7 @@ void render_screen(FloraScreen *screen, FloraWindow *window) {
     }
 }
 
-void deinit_screen(FloraApplicationState *state, FloraScreen *screen) {
+void destroy_flora_screen(FloraApplicationState *state, FloraScreen *screen) {
     (void) state;
     if (!screen) {
         fprintf(stderr, "Error: Screen is not initialized\n");

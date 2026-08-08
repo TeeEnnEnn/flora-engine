@@ -6,17 +6,17 @@
 #include "flora_apps.h"
 #include "table.h"
 
-bool init_fonts() {
+int init_flora_fonts() {
     if (!TTF_Init()) {
         fprintf(stderr, "Error: Failed to initialize fonts: %s\n", SDL_GetError());
-        return false;
+        return FLORA_FALSE;
     }
-    return true;
+    return FLORA_TRUE;
 }
 
-bool destroy_fonts(FloraApplicationState *state) {
+int deinit_flora_fonts(FloraApplicationState *state) {
     if (!state) {
-        return false;
+        return FLORA_FALSE;
     }
     for (int i = 0; i < (int) state->font_table.capacity; i++) {
         if (state->font_table.entries[i].element != NULL) {
@@ -31,10 +31,10 @@ bool destroy_fonts(FloraApplicationState *state) {
     deinit_table(&state->font_table);
     TTF_Quit();
     printf("Log: Successfully destroyed fonts.\n");
-    return true;
+    return FLORA_TRUE;
 }
 
-TTF_Font* add_font(FloraApplicationState *state, const char *path, const float point_size) {
+FloraFont* add_flora_font(FloraApplicationState *state, const char *path, const float point_size) {
     if (!path) {
         fprintf(stderr, "Error: Font path not provided.\n");
         return NULL;
@@ -48,7 +48,7 @@ TTF_Font* add_font(FloraApplicationState *state, const char *path, const float p
     if (get_table(&state->font_table, &existing, path)) {
         FloraFont *flora_font = (FloraFont *) existing;
         if (flora_font) {
-            return flora_font->font;
+            return flora_font;
         }
     }
 
@@ -76,5 +76,5 @@ TTF_Font* add_font(FloraApplicationState *state, const char *path, const float p
         return NULL;
     }
 
-    return font;
+    return flora_font;
 }

@@ -1,4 +1,5 @@
 #include "table.h"
+#include "flora.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,15 +8,15 @@
 #define FNV_OFFSET_BIAS 14695981039346656037ULL
 #define FNV_PRIME 1099511628211
 
-bool init_table(Table *table, const uint64_t capacity) {
+int init_table(Table *table, const uint64_t capacity) {
     table->capacity = capacity;
     table->count = 0;
     table->entries = calloc(table->capacity, sizeof(TableEntry));
     if (table->entries == NULL) {
         fprintf(stderr, "Error: not enough memory for table->elements\n");
-        return false;
+        return FLORA_FALSE;
     }
-    return true;
+    return FLORA_TRUE;
 }
 
 void deinit_table(Table *table) {
@@ -40,12 +41,12 @@ static uint64_t hash_key(const char *key) {
     return hash;
 }
 
-static bool resize_table(Table *table, const uint64_t current_capacity) {
+static int resize_table(Table *table, const uint64_t current_capacity) {
     const uint64_t new_capacity = current_capacity * 2;
     TableEntry *new_entries = calloc(new_capacity, sizeof(TableEntry));
     if (new_entries == NULL) {
         fprintf(stderr, "Error: not enough memory for new_entries\n");
-        return false;
+        return FLORA_FALSE;
     }
 
     for (uint64_t i = 0; i < table->capacity; i++) {
@@ -65,15 +66,15 @@ static bool resize_table(Table *table, const uint64_t current_capacity) {
     free(table->entries);
     table->entries = new_entries;
     table->capacity = new_capacity;
-    return true;
+    return FLORA_TRUE;
 }
 
-bool set_table(Table *table, void *element, const char *key) {
-    if (key[0] == '\0' || !table) return false;
+int set_table(Table *table, void *element, const char *key) {
+    if (key[0] == '\0' || !table) return FLORA_FALSE;
 
     if (table->count >= (uint64_t) ((double) table->capacity * TABLE_LOAD_FACTOR)) {
         if (!resize_table(table, table->capacity)) {
-            return false;
+            return FLORA_FALSE;
         }
     }
 
@@ -84,7 +85,7 @@ bool set_table(Table *table, void *element, const char *key) {
         // already occupied - update
         if (strncmp(table->entries[index].key, key, TABLE_KEY_LENGTH) == 0) {
             table->entries[index].element = element;
-            return true;
+            return FLORA_TRUE;
         }
         // Collision: Move to next slot
         index = (index + 1) % table->capacity;
@@ -96,11 +97,11 @@ bool set_table(Table *table, void *element, const char *key) {
     table->entries[index].element = element;
 
     table->count++;
-    return true;
+    return FLORA_TRUE;
 }
 
-bool get_table(Table *table, void **element, const char *key) {
-    if (!table || key[0] == '\0') return false;
+int get_table(Table *table, void **element, const char *key) {
+    if (!table || key[0] == '\0') return FLORA_FALSE;
 
     const uint64_t hash = hash_key(key);
     uint64_t index = hash % table->capacity;
@@ -110,7 +111,7 @@ bool get_table(Table *table, void **element, const char *key) {
     while (table->entries[index].key[0] != '\0') {
         if (strncmp(table->entries[index].key, key, TABLE_KEY_LENGTH) == 0) {
             *element = table->entries[index].element;
-            return true;
+            return FLORA_TRUE;
         }
 
         index = (index + 1) % table->capacity;
@@ -119,5 +120,5 @@ bool get_table(Table *table, void **element, const char *key) {
         if (index == start_index) break;
     }
 
-    return false;
+    return FLORA_FALSE;
 }

@@ -1,17 +1,13 @@
 #ifndef FLORA_EVENTS_H
 #define FLORA_EVENTS_H
 
-#include <stdbool.h>
 #include <SDL3/SDL.h>
 
-typedef struct FloraApplicationState FloraApplicationState;
-typedef struct FloraScreen FloraScreen;
-typedef struct FloraWindow FloraWindow;
-typedef struct FloraFont FloraFont;
+#include "flora.h"
 
 void get_input(FloraApplicationState *state);
 
-typedef enum {
+typedef enum FloraEventType{
     FLORA_MOUSE_MOVE,
     FLORA_MOUSE_DOWN,
     FLORA_MOUSE_UP,
@@ -21,7 +17,7 @@ typedef enum {
     FLORA_UNHANDLED,
 } FloraEventType;
 
-typedef struct {
+typedef struct FloraEvent{
     FloraEventType type;
 
     union {
@@ -32,22 +28,22 @@ typedef struct {
     } as;
 } FloraEvent;
 
-typedef struct {
+typedef struct FloraEventQueue{
     FloraEvent **events;
     int back;
     int front;
     int capacity;
-} EventQueue;
+} FloraEventQueue;
 
-bool init_event_queue(EventQueue *queue, int capacity);
+bool init_event_queue(FloraEventQueue *queue, int capacity);
 
-bool destroy_event_queue(EventQueue *queue);
+bool destroy_event_queue(FloraEventQueue *queue);
 
-bool enqueue_event(EventQueue *queue, FloraEvent *event);
+bool enqueue_event(FloraEventQueue *queue, FloraEvent *event);
 
-bool dequeue_event(EventQueue *queue, FloraEvent **event);
+bool dequeue_event(FloraEventQueue *queue, FloraEvent **event);
 
-bool is_event_queue_empty(EventQueue *queue);
+bool is_event_queue_empty(FloraEventQueue *queue);
 
 bool destroy_event(FloraEvent *event);
 
