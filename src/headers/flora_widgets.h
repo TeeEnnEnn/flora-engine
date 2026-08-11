@@ -5,33 +5,40 @@
 #include "flora.h"
 
 struct FloraWidget {
-    int id;
-    FloraWidgetType type;
-    FloraWidget *parent;
-    FloraWidget **children;
-    FloraWidgetStyle style;
-    FloraWidgetCallbacks callbacks;
-    int child_count;
-    int child_capacity;
-    bool is_visible;
+	int id;
+	FloraWidgetType type;
+	FloraWidget *parent;
+	FloraWidget **children;
+	FloraWidgetStyle style;
+	FloraWidgetCallbacks callbacks;
+	int child_count;
+	int child_capacity;
+	int is_visible;
 
-    union {
-        struct {} box;
+	union {
+		struct {
+		} box;
+		struct {
+		} image;
+		struct {
+		} scroll_box;
 
-        struct {}image;
-
-        struct {
-            TTF_Font *font;
-            int length;
-            char *content;
-            SDL_Surface *surface;
-            SDL_Texture *texture;
-        } text;
-    } as;
+		struct {
+			/* Font used to render this text */
+			TTF_Font *font;
+			/* The length of the text content */
+			int content_length;
+			/* Allocated text content */
+			char *content;
+			TTF_Text *ttf_text;
+			SDL_Surface *surface;
+			SDL_Texture *texture;
+		} text;
+	} as;
 };
 
 int cleanup_widget(FloraWidget *widget);
 
 int widget_contains_point(FloraWidget *widget, int x, int y);
 
-#endif //FLORA_WIDGETS_H
+#endif // FLORA_WIDGETS_H

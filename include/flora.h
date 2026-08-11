@@ -17,13 +17,13 @@ extern "C" {
 #define DEFAULT_FONT_TABLE_CAPACITY 4
 
 typedef struct {
-    char* app_name;
-    int window_width;
-    int window_height;
-    int event_queue_capacity;
-    int use_fonts;
-    int window_table_initial_capacity;
-    int font_table_initial_capacity;
+	char *app_name;
+	int window_width;
+	int window_height;
+	int event_queue_capacity;
+	int use_fonts;
+	int window_table_initial_capacity;
+	int font_table_initial_capacity;
 } FloraConfig;
 
 typedef struct FloraApplicationState FloraApplicationState;
@@ -37,28 +37,17 @@ typedef struct FloraWidget FloraWidget;
 typedef struct FloraFont FloraFont;
 
 typedef struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+	uint8_t a;
 } FloraColour;
 
-typedef enum FloraLayoutDirection {
-    LEFT_TO_RIGHT,
-    TOP_TO_BOTTOM
-} FloraLayoutDirection;
+typedef enum FloraLayoutDirection { LEFT_TO_RIGHT, TOP_TO_BOTTOM } FloraLayoutDirection;
 
-typedef enum FloraSizingType {
-    FIT,
-    FIXED,
-    GROW
-} FloraSizingType;
+typedef enum FloraSizingType { FIT, FIXED, GROW } FloraSizingType;
 
-typedef enum FloraWidgetType {
-    FLORA_BOX,
-    FLORA_TEXT
-} FloraWidgetType;
-
+typedef enum FloraWidgetType { FLORA_BOX, FLORA_TEXT } FloraWidgetType;
 
 typedef void (*widget_update)(FloraWidget *widget, FloraApplicationState *state);
 typedef void (*widget_render)(FloraWidget *widget, FloraWindow *window);
@@ -71,51 +60,50 @@ typedef void (*on_deinit_screen)(FloraApplicationState *state, FloraScreen *scre
 typedef void (*on_init_window)(FloraApplicationState *state, FloraWindow *window);
 typedef void (*on_deinit_window)(FloraApplicationState *state, FloraWindow *window);
 
-
 typedef struct {
-    float left;
-    float right;
-    float top;
-    float bottom;
+	float left;
+	float right;
+	float top;
+	float bottom;
 } FloraPadding;
 
 typedef struct {
-    float x;
-    float y;
+	float x;
+	float y;
 } FloraGap;
 
 typedef struct {
-    FloraSizingType type;
-    float value;
+	FloraSizingType type;
+	float value;
 } FloraDimension;
 
 typedef struct {
-    FloraDimension width;
-    FloraDimension height;
+	FloraDimension width;
+	FloraDimension height;
 } FloraSizing;
 
 typedef struct {
-    float x;
-    float y;
+	float x;
+	float y;
 } FloraPosition;
 
 typedef struct {
-    FloraColour text_colour; /* is not used if not a text widget */
-    int font_size;
-    FloraColour inner_colour;
-    FloraColour border_colour;
-    FloraPadding padding;
-    FloraGap gap;
-    FloraLayoutDirection layout_direction;
-    FloraSizing sizing;
-    FloraPosition position;
+	FloraColour text_colour; /* is not used if not a text widget */
+	int font_size;
+	FloraColour inner_colour;
+	FloraColour border_colour;
+	FloraPadding padding;
+	FloraGap gap;
+	FloraLayoutDirection layout_direction;
+	FloraSizing sizing;
+	FloraPosition position;
 } FloraWidgetStyle;
 
 typedef struct {
-    widget_update update;
-    widget_render render;
-    widget_on_mouse_down on_mouse_down;
-    widget_on_destroy on_destroy;
+	widget_update update;
+	widget_render render;
+	widget_on_mouse_down on_mouse_down;
+	widget_on_destroy on_destroy;
 } FloraWidgetCallbacks;
 
 /* Sizing helpers - build a FloraDimension / FloraSizing / FloraPadding inline. */
@@ -128,7 +116,6 @@ typedef struct {
 #define PADDING(v) ((FloraPadding){.left = (v), .right = (v), .top = (v), .bottom = (v)})
 #define PADDING_X(v) ((FloraPadding){.left = (v), .right = (v), .top = 0, .bottom = 0})
 #define PADDING_Y(v) ((FloraPadding){.left = 0, .right = 0, .top = (v), .bottom = (v)})
-
 
 /**
  * Create a flora application state and initialize it.
@@ -210,7 +197,7 @@ int set_current_flora_window(FloraApplicationState *state, FloraWindow *window);
  * @return The initialized screen, or NULL on failure
  */
 FloraScreen *init_flora_screen(FloraApplicationState *state, FloraWindow *window, char *screen_name,
-                               on_init_screen on_init_screen, on_deinit_screen on_deinit_screen);
+							   on_init_screen on_init_screen, on_deinit_screen on_deinit_screen);
 
 /**
  * Get a screen from a window by its name.
@@ -241,9 +228,10 @@ void destroy_flora_screen(FloraApplicationState *state, FloraScreen *screen);
  * @param state The flora application state
  * @param path The path to the font file
  * @param point_size The point size to load
+ * @param font_name The name of the font - used to identify the font
  * @return The font handle, or NULL on failure
  */
-FloraFont *add_flora_font(FloraApplicationState *state, const char *path, float point_size);
+FloraFont *add_flora_font(FloraApplicationState *state, const char *path, float point_size, char *font_name);
 
 /**
  * Create a box widget. The widget's render callback defaults to base_box_widget_render.
@@ -254,7 +242,7 @@ FloraFont *add_flora_font(FloraApplicationState *state, const char *path, float 
  * @return The created widget, or NULL on failure
  */
 FloraWidget *create_flora_box_widget(FloraApplicationState *state, FloraWidget *parent, int is_visible,
-                                     FloraWidgetStyle style);
+									 FloraWidgetStyle style);
 
 /**
  * Create a text widget. The widget's render callback defaults to base_text_widget_render.
@@ -268,8 +256,9 @@ FloraWidget *create_flora_box_widget(FloraApplicationState *state, FloraWidget *
  * @param style The initial style (use a (FloraWidgetStyle){...} literal or {0} for defaults)
  * @return The created widget, or NULL on failure
  */
-FloraWidget *create_flora_text_widget(FloraApplicationState *state, FloraWidget *parent, int is_visible,
-                                      const char *text, FloraFont *font, FloraWidgetStyle style);
+FloraWidget *create_flora_text_widget(FloraApplicationState *state, FloraWindow *window, FloraWidget *parent,
+									  const int is_visible, const char *text, const char *font_name,
+									  FloraWidgetStyle style);
 
 /**
  * Add a child widget to a parent widget.
@@ -303,7 +292,6 @@ void set_flora_widget_on_destroy(FloraWidget *widget, widget_on_destroy on_destr
 void base_box_widget_render(FloraWidget *widget, FloraWindow *window);
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state);
 void base_text_widget_render(FloraWidget *widget, FloraWindow *window);
-
 
 /* FLORA COLOUR DEFINITIONS */
 
@@ -596,9 +584,8 @@ void base_text_widget_render(FloraWidget *widget, FloraWindow *window);
 #define FLORA_ROSE_900 ((FloraColour){.r = 136, .g = 19, .b = 55, .a = 255})
 #define FLORA_ROSE_950 ((FloraColour){.r = 76, .g = 5, .b = 25, .a = 255})
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif //FLORA_H
+#endif // FLORA_H

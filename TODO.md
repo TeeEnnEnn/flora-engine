@@ -12,5 +12,5 @@
     - [x] Ways to set a screen as the current screen
 - [ ] More Alignment Options
 - [ ] Scrollable Widgets
-- [ ] Make C library
-- [ ] Make better demo scene
+- [x] Make C library
+- [x] Make better demo scene
