@@ -14,6 +14,7 @@ struct FloraWidget {
 	int child_count;
 	int child_capacity;
 	int is_visible;
+	int is_dirty;
 
 	union {
 		struct {

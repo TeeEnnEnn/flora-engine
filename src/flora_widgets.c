@@ -103,20 +103,42 @@ static void calculate_grow_sizing_top_to_bottom(const FloraWidget *widget)
 
 static void calculate_widget_grow_width(FloraWidget *widget)
 {
+	if (widget->is_dirty) {
+		calculate_grow_sizing_left_to_right(widget);
+		for (int i = 0; i < widget->child_count; i++) {
+			FloraWidget *child = widget->children[i];
+			if (child->style.sizing.width.type == GROW) {
+				child->is_dirty = FLORA_TRUE; // its value may have just changed
+			}
+		}
+	}
+
 	for (int i = 0; i < widget->child_count; i++) {
 		FloraWidget *child = widget->children[i];
-		calculate_widget_grow_width(child);
+		if (child->is_dirty) {
+			calculate_widget_grow_width(child);
+		}
 	}
-	calculate_grow_sizing_left_to_right(widget);
 }
 
 static void calculate_widget_grow_height(FloraWidget *widget)
 {
+	if (widget->is_dirty) {
+		calculate_grow_sizing_top_to_bottom(widget);
+		for (int i = 0; i < widget->child_count; i++) {
+			FloraWidget *child = widget->children[i];
+			if (child->style.sizing.height.type == GROW) {
+				child->is_dirty = FLORA_TRUE; // its value may have just changed
+			}
+		}
+	}
+
 	for (int i = 0; i < widget->child_count; i++) {
 		FloraWidget *child = widget->children[i];
-		calculate_widget_grow_height(child);
+		if (child->is_dirty) {
+			calculate_widget_grow_height(child);
+		}
 	}
-	calculate_grow_sizing_top_to_bottom(widget);
 }
 
 static void calculate_widget_fit_width(FloraWidget *widget)
@@ -314,6 +336,21 @@ static void calculate_child_positions(FloraWidget *widget)
 	}
 }
 
+/**
+ * Propogate dirty flag upwards
+ */
+static void set_dirty(FloraWidget *widget)
+{
+	widget->is_dirty = FLORA_TRUE;
+
+	FloraWidget *parent = widget->parent;
+	if (parent == NULL) {
+		return;
+	}
+
+	set_dirty(parent);
+}
+
 static int render_widget(FloraWidget *widget, FloraWindow *window)
 {
 	if (!widget || widget->is_visible == FLORA_FALSE || !window) {
@@ -408,6 +445,7 @@ FloraWidget *create_flora_box_widget(FloraApplicationState *state, FloraWidget *
 	}
 	new_widget->id = screen->widget_count++;
 	new_widget->is_visible = is_visible ? FLORA_TRUE : FLORA_FALSE;
+	new_widget->is_dirty = FLORA_FALSE;
 	new_widget->style = style;
 	new_widget->callbacks.render = base_box_widget_render;
 	new_widget->child_capacity = INITIAL_CHILD_WIDGET_CAPACITY;
@@ -500,6 +538,7 @@ FloraWidget *create_flora_text_widget(FloraApplicationState *state, FloraWindow 
 	new_widget->id = screen->widget_count++;
 	new_widget->is_visible = is_visible ? FLORA_TRUE : FLORA_FALSE;
 	new_widget->style = style;
+	new_widget->is_dirty = FLORA_FALSE;
 	/* Auto-size to the measured text unless the caller provided explicit sizing.
 	 */
 	if (style.sizing.width.type == FIT && style.sizing.width.value == 0.0f && style.sizing.height.type == FIT &&
