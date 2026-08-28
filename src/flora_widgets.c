@@ -115,9 +115,7 @@ static void calculate_widget_grow_width(FloraWidget *widget)
 
 	for (int i = 0; i < widget->child_count; i++) {
 		FloraWidget *child = widget->children[i];
-		if (child->is_dirty) {
-			calculate_widget_grow_width(child);
-		}
+		calculate_widget_grow_width(child);
 	}
 }
 
@@ -135,9 +133,7 @@ static void calculate_widget_grow_height(FloraWidget *widget)
 
 	for (int i = 0; i < widget->child_count; i++) {
 		FloraWidget *child = widget->children[i];
-		if (child->is_dirty) {
-			calculate_widget_grow_height(child);
-		}
+		calculate_widget_grow_height(child);
 	}
 }
 
@@ -227,6 +223,9 @@ static int calculate_widget_wrapping(FloraWidget *widget)
 			fprintf(stderr, "ERROR: Failed to create wrapped text surface");
 			return FLORA_FALSE;
 		}
+
+		if (widget->as.text.surface != NULL)
+			SDL_DestroySurface(widget->as.text.surface);
 
 		widget->as.text.surface = text_surface;
 		const float text_width = (float)text_surface->w;
@@ -351,64 +350,6 @@ static void set_dirty(FloraWidget *widget)
 	set_dirty(parent);
 }
 
-static int render_widget(FloraWidget *widget, FloraWindow *window)
-{
-	if (!widget || widget->is_visible == FLORA_FALSE || !window) {
-		return FLORA_TRUE;
-	}
-
-	switch (widget->type) {
-	case FLORA_TEXT: {
-		if (!widget->as.text.surface) {
-			fprintf(stderr, "ERROR: Attempted to render text to non existent surface.\n");
-			return FLORA_FALSE;
-		}
-
-		SDL_Texture *texture = SDL_CreateTextureFromSurface(window->renderer, widget->as.text.surface);
-		if (!texture) {
-			fprintf(stderr, "ERROR: Failed to create texture to render text\n");
-			return FLORA_FALSE;
-		}
-		widget->as.text.texture = texture;
-		SDL_RenderTexture(window->renderer, widget->as.text.texture, NULL,
-						  &(SDL_FRect){widget->style.position.x, widget->style.position.y,
-									   widget->style.sizing.width.value, widget->style.sizing.height.value});
-		break;
-	}
-
-	case FLORA_BOX: {
-		const FloraWidgetStyle style = widget->style;
-		const FloraPosition position = widget->style.position;
-
-		SDL_SetRenderDrawColor(window->renderer, style.inner_colour.r, style.inner_colour.g, style.inner_colour.b,
-							   style.inner_colour.a);
-		const SDL_FRect rect = {position.x, position.y, widget->style.sizing.width.value,
-								widget->style.sizing.height.value};
-		SDL_RenderFillRect(window->renderer, &rect);
-		SDL_SetRenderDrawColor(window->renderer, style.border_colour.r, style.border_colour.g, style.border_colour.b,
-							   style.border_colour.a);
-		SDL_RenderRect(window->renderer, &rect);
-
-		for (int i = 0; i < widget->child_count; i++) {
-			FloraWidget *child = widget->children[i];
-			if (child && child->is_visible) {
-				render_widget(child, window);
-			}
-		}
-		break;
-	}
-	}
-	return FLORA_TRUE;
-}
-
-void base_text_widget_render(FloraWidget *widget, FloraWindow *window)
-{
-	if (!widget || !widget->is_visible) {
-		return;
-	}
-	render_widget(widget, window);
-}
-
 FloraWidget *create_flora_box_widget(FloraApplicationState *state, FloraWidget *parent, const int is_visible,
 									 FloraWidgetStyle style)
 {
@@ -445,9 +386,8 @@ FloraWidget *create_flora_box_widget(FloraApplicationState *state, FloraWidget *
 	}
 	new_widget->id = screen->widget_count++;
 	new_widget->is_visible = is_visible ? FLORA_TRUE : FLORA_FALSE;
-	new_widget->is_dirty = FLORA_FALSE;
+	new_widget->is_dirty = FLORA_TRUE; // dirty on first render
 	new_widget->style = style;
-	new_widget->callbacks.render = base_box_widget_render;
 	new_widget->child_capacity = INITIAL_CHILD_WIDGET_CAPACITY;
 	new_widget->parent = parent;
 	new_widget->children = NULL;
@@ -538,7 +478,7 @@ FloraWidget *create_flora_text_widget(FloraApplicationState *state, FloraWindow 
 	new_widget->id = screen->widget_count++;
 	new_widget->is_visible = is_visible ? FLORA_TRUE : FLORA_FALSE;
 	new_widget->style = style;
-	new_widget->is_dirty = FLORA_FALSE;
+	new_widget->is_dirty = FLORA_TRUE; // dirty on first render
 	/* Auto-size to the measured text unless the caller provided explicit sizing.
 	 */
 	if (style.sizing.width.type == FIT && style.sizing.width.value == 0.0f && style.sizing.height.type == FIT &&
@@ -546,7 +486,6 @@ FloraWidget *create_flora_text_widget(FloraApplicationState *state, FloraWindow 
 		new_widget->style.sizing.width = (FloraDimension){FIXED, text_width};
 		new_widget->style.sizing.height = (FloraDimension){FIXED, text_height};
 	}
-	new_widget->callbacks.render = base_text_widget_render;
 	new_widget->child_capacity = INITIAL_CHILD_WIDGET_CAPACITY;
 	new_widget->parent = parent;
 	new_widget->children = NULL;
@@ -595,6 +534,7 @@ int add_flora_child_widget(FloraWidget *widget, FloraWidget *child)
 	}
 	widget->children[widget->child_count++] = child;
 	child->parent = widget;
+	set_dirty(widget);
 	return FLORA_TRUE;
 }
 
@@ -612,6 +552,7 @@ void set_flora_widget_style(FloraWidget *widget, FloraWidgetStyle style)
 		SDL_DestroyTexture(widget->as.text.texture);
 		widget->as.text.texture = NULL;
 	}
+	set_dirty(widget);
 }
 
 void set_flora_widget_position(FloraWidget *widget, float x, float y)
@@ -621,6 +562,7 @@ void set_flora_widget_position(FloraWidget *widget, float x, float y)
 	}
 	widget->style.position.x = x;
 	widget->style.position.y = y;
+	set_dirty(widget);
 }
 
 void set_flora_widget_width(FloraWidget *widget, FloraSizingType type, float value)
@@ -630,6 +572,7 @@ void set_flora_widget_width(FloraWidget *widget, FloraSizingType type, float val
 	}
 	widget->style.sizing.width.type = type;
 	widget->style.sizing.width.value = value;
+	set_dirty(widget);
 }
 
 void set_flora_widget_height(FloraWidget *widget, FloraSizingType type, float value)
@@ -639,6 +582,7 @@ void set_flora_widget_height(FloraWidget *widget, FloraSizingType type, float va
 	}
 	widget->style.sizing.height.type = type;
 	widget->style.sizing.height.value = value;
+	set_dirty(widget);
 }
 
 void set_flora_widget_inner_colour(FloraWidget *widget, FloraColour colour)
@@ -647,6 +591,7 @@ void set_flora_widget_inner_colour(FloraWidget *widget, FloraColour colour)
 		return;
 	}
 	widget->style.inner_colour = colour;
+	set_dirty(widget);
 }
 
 void set_flora_widget_border_colour(FloraWidget *widget, FloraColour colour)
@@ -655,6 +600,7 @@ void set_flora_widget_border_colour(FloraWidget *widget, FloraColour colour)
 		return;
 	}
 	widget->style.border_colour = colour;
+	set_dirty(widget);
 }
 
 void set_flora_widget_text_colour(FloraWidget *widget, FloraColour colour)
@@ -667,6 +613,7 @@ void set_flora_widget_text_colour(FloraWidget *widget, FloraColour colour)
 		SDL_DestroyTexture(widget->as.text.texture);
 		widget->as.text.texture = NULL;
 	}
+	set_dirty(widget);
 }
 
 void set_flora_widget_font_size(FloraWidget *widget, int size)
@@ -675,6 +622,7 @@ void set_flora_widget_font_size(FloraWidget *widget, int size)
 		return;
 	}
 	widget->style.font_size = size;
+	set_dirty(widget);
 }
 
 void set_flora_widget_padding(FloraWidget *widget, float left, float right, float top, float bottom)
@@ -683,6 +631,7 @@ void set_flora_widget_padding(FloraWidget *widget, float left, float right, floa
 		return;
 	}
 	widget->style.padding = (FloraPadding){left, right, top, bottom};
+	set_dirty(widget);
 }
 
 void set_flora_widget_gap(FloraWidget *widget, float x, float y)
@@ -691,6 +640,7 @@ void set_flora_widget_gap(FloraWidget *widget, float x, float y)
 		return;
 	}
 	widget->style.gap = (FloraGap){x, y};
+	set_dirty(widget);
 }
 
 void set_flora_widget_layout_direction(FloraWidget *widget, FloraLayoutDirection direction)
@@ -699,6 +649,7 @@ void set_flora_widget_layout_direction(FloraWidget *widget, FloraLayoutDirection
 		return;
 	}
 	widget->style.layout_direction = direction;
+	set_dirty(widget);
 }
 
 void set_flora_widget_visible(FloraWidget *widget, int is_visible)
@@ -707,6 +658,7 @@ void set_flora_widget_visible(FloraWidget *widget, int is_visible)
 		return;
 	}
 	widget->is_visible = is_visible ? FLORA_TRUE : FLORA_FALSE;
+	set_dirty(widget);
 }
 
 void set_flora_widget_update(FloraWidget *widget, widget_update update)
@@ -715,14 +667,6 @@ void set_flora_widget_update(FloraWidget *widget, widget_update update)
 		return;
 	}
 	widget->callbacks.update = update;
-}
-
-void set_flora_widget_render(FloraWidget *widget, widget_render render)
-{
-	if (!widget) {
-		return;
-	}
-	widget->callbacks.render = render;
 }
 
 void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_on_mouse_down on_mouse_down)
@@ -741,19 +685,71 @@ void set_flora_widget_on_destroy(FloraWidget *widget, widget_on_destroy on_destr
 	widget->callbacks.on_destroy = on_destroy;
 }
 
-void base_box_widget_render(FloraWidget *widget, FloraWindow *window)
+int layout_widget(FloraWidget *widget)
 {
 	if (!widget || !widget->is_visible) {
-		return;
+		return FLORA_FALSE;
 	}
-
 	calculate_widget_fit_width(widget);
 	calculate_widget_grow_width(widget);
 	calculate_widget_wrapping(widget);
 	calculate_widget_fit_height(widget);
 	calculate_widget_grow_height(widget);
 	calculate_child_positions(widget);
-	render_widget(widget, window);
+	return FLORA_TRUE;
+}
+
+int render_widget(FloraWindow *window, FloraWidget *widget)
+{
+	if (!widget || widget->is_visible == FLORA_FALSE || !window) {
+		return FLORA_TRUE;
+	}
+
+	switch (widget->type) {
+	case FLORA_TEXT: {
+		if (!widget->as.text.surface) {
+			fprintf(stderr, "ERROR: Attempted to render text to non existent surface.\n");
+			return FLORA_FALSE;
+		}
+
+		SDL_Texture *texture = SDL_CreateTextureFromSurface(window->renderer, widget->as.text.surface);
+		if (!texture) {
+			fprintf(stderr, "ERROR: Failed to create texture to render text\n");
+			return FLORA_FALSE;
+		}
+		if (widget->as.text.texture != NULL) {
+			SDL_DestroyTexture(widget->as.text.texture);
+		}
+		widget->as.text.texture = texture;
+		SDL_RenderTexture(window->renderer, widget->as.text.texture, NULL,
+						  &(SDL_FRect){widget->style.position.x, widget->style.position.y,
+									   widget->style.sizing.width.value, widget->style.sizing.height.value});
+		break;
+	}
+
+	case FLORA_BOX: {
+		const FloraWidgetStyle style = widget->style;
+		const FloraPosition position = widget->style.position;
+
+		SDL_SetRenderDrawColor(window->renderer, style.inner_colour.r, style.inner_colour.g, style.inner_colour.b,
+							   style.inner_colour.a);
+		const SDL_FRect rect = {position.x, position.y, widget->style.sizing.width.value,
+								widget->style.sizing.height.value};
+		SDL_RenderFillRect(window->renderer, &rect);
+		SDL_SetRenderDrawColor(window->renderer, style.border_colour.r, style.border_colour.g, style.border_colour.b,
+							   style.border_colour.a);
+		SDL_RenderRect(window->renderer, &rect);
+
+		for (int i = 0; i < widget->child_count; i++) {
+			FloraWidget *child = widget->children[i];
+			if (child && child->is_visible) {
+				render_widget(window, child);
+			}
+		}
+		break;
+	}
+	}
+	return FLORA_TRUE;
 }
 
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state)

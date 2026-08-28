@@ -14,7 +14,7 @@ struct FloraWidget {
 	int child_count;
 	int child_capacity;
 	int is_visible;
-	int is_dirty;
+	int is_dirty; // TODO: split to layout dirty paint dirty
 
 	union {
 		struct {
@@ -39,6 +39,10 @@ struct FloraWidget {
 };
 
 int cleanup_widget(FloraWidget *widget);
+
+int layout_widget(FloraWidget *widget);
+
+int render_widget(FloraWindow *window, FloraWidget *widget);
 
 int widget_contains_point(FloraWidget *widget, int x, int y);
 

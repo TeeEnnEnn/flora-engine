@@ -54,6 +54,12 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state)
 				break;
 			}
 			case FLORA_MOUSE_DOWN: {
+				// TODO: fix hit scanning
+				// 1. loop through roots  (parent == NULL)
+				// 2. check for a parent that the hit contains
+				// 3. Depth first traversal
+				// 4. The deepest child is the child to receive the hit
+
 				// Do this backwards, last rendered is first to receive
 				for (int i = screen->widget_count - 1; i > -1; i--) {
 					FloraWidget *widget = screen->widgets[i];
@@ -119,9 +125,21 @@ void render_screen(FloraScreen *screen, FloraWindow *window)
 
 	for (int i = 0; i < screen->widget_count; i++) {
 		FloraWidget *widget = screen->widgets[i];
-		if (widget->is_visible && widget->callbacks.render) {
-			widget->callbacks.render(widget, window);
+		if (widget->parent != NULL)
+			continue; // only run render for parents
+		if (widget->is_visible == FLORA_FALSE)
+			continue; // skip roots that are not visible and do not have a render function
+
+		if (widget->is_dirty == FLORA_TRUE) {
+			layout_widget(widget);
 		}
+		render_widget(window, widget);
+	}
+
+	// reset dirty flag
+	for (int i = 0; i < screen->widget_count; i++) {
+		FloraWidget *widget = screen->widgets[i];
+		widget->is_dirty = FLORA_FALSE;
 	}
 }
 

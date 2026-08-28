@@ -50,7 +50,6 @@ typedef enum FloraSizingType { FIT, FIXED, GROW } FloraSizingType;
 typedef enum FloraWidgetType { FLORA_BOX, FLORA_TEXT } FloraWidgetType;
 
 typedef void (*widget_update)(FloraWidget *widget, FloraApplicationState *state);
-typedef void (*widget_render)(FloraWidget *widget, FloraWindow *window);
 typedef void (*widget_on_mouse_down)(FloraWidget *widget, FloraApplicationState *state);
 typedef void (*widget_on_destroy)(FloraWidget *widget, FloraApplicationState *state);
 
@@ -88,7 +87,8 @@ typedef struct {
 } FloraPosition;
 
 typedef struct {
-	FloraColour text_colour; /* is not used if not a text widget */
+    /** is not used if not a text widget */
+	FloraColour text_colour;
 	int font_size;
 	FloraColour inner_colour;
 	FloraColour border_colour;
@@ -100,9 +100,11 @@ typedef struct {
 } FloraWidgetStyle;
 
 typedef struct {
+    /** Called on every frame */
 	widget_update update;
-	widget_render render;
+	/** Called when the mouse down event reaches this widget */
 	widget_on_mouse_down on_mouse_down;
+	/** Called when the widget is destroyed */
 	widget_on_destroy on_destroy;
 } FloraWidgetCallbacks;
 
@@ -234,7 +236,7 @@ void destroy_flora_screen(FloraApplicationState *state, FloraScreen *screen);
 FloraFont *add_flora_font(FloraApplicationState *state, const char *path, float point_size, char *font_name);
 
 /**
- * Create a box widget. The widget's render callback defaults to base_box_widget_render.
+ * Create a box widget.
  * @param state The flora application state
  * @param parent The parent widget (NULL for a root widget)
  * @param is_visible FLORA_TRUE / FLORA_FALSE
@@ -245,7 +247,7 @@ FloraWidget *create_flora_box_widget(FloraApplicationState *state, FloraWidget *
 									 FloraWidgetStyle style);
 
 /**
- * Create a text widget. The widget's render callback defaults to base_text_widget_render.
+ * Create a text widget.
  * The text is copied, so the caller keeps ownership of the string.
  * The widget is auto-sized to the measured text size unless the style overrides "sizing".
  * @param state The flora application state
@@ -284,14 +286,11 @@ void set_flora_widget_visible(FloraWidget *widget, int is_visible);
 
 /* Widget callback setters */
 void set_flora_widget_update(FloraWidget *widget, widget_update update);
-void set_flora_widget_render(FloraWidget *widget, widget_render render);
 void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_on_mouse_down on_mouse_down);
 void set_flora_widget_on_destroy(FloraWidget *widget, widget_on_destroy on_destroy);
 
 /* Base widget callbacks, referenceable by name */
-void base_box_widget_render(FloraWidget *widget, FloraWindow *window);
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state);
-void base_text_widget_render(FloraWidget *widget, FloraWindow *window);
 
 /* FLORA COLOUR DEFINITIONS */
 
