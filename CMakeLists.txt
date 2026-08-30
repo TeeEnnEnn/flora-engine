@@ -8,6 +8,41 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "ASAN" AND NOT UNIX)
+  message(FATAL_ERROR "ASAN builds are only allowed on UNIX-like systems")
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "ASAN")
+  add_compile_options(-g3 -O0 -Wall -Wextra)
+
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fstack-protector-strong")
+
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wformat=2 -Wformat-security")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wnull-dereference -Wstack-protector")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Warray-bounds -Wshift-overflow")
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "ASAN")
+  if (UNIX)
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined")
+  endif ()
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  add_compile_options(-O3 -fno-delete-null-pointer-checks -flto -flto=auto)
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Perf")
+  add_compile_options(-O2 -g -fno-omit-frame-pointer -fno-delete-null-pointer-checks -flto -flto=auto)
+endif()
+
+
 FetchContent_Declare (
         SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git

@@ -46,4 +46,6 @@ int render_widget(FloraWindow *window, FloraWidget *widget);
 
 int widget_contains_point(FloraWidget *widget, int x, int y);
 
+FloraWidget *find_deepest_containing_widget(FloraScreen *screen, const int x, const int y);
+
 #endif // FLORA_WIDGETS_H

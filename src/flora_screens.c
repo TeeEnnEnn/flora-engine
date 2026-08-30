@@ -54,21 +54,13 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state)
 				break;
 			}
 			case FLORA_MOUSE_DOWN: {
-				// TODO: fix hit scanning
-				// 1. loop through roots  (parent == NULL)
-				// 2. check for a parent that the hit contains
-				// 3. Depth first traversal
-				// 4. The deepest child is the child to receive the hit
-
-				// Do this backwards, last rendered is first to receive
-				for (int i = screen->widget_count - 1; i > -1; i--) {
-					FloraWidget *widget = screen->widgets[i];
-					if (widget->is_visible && widget->callbacks.on_mouse_down &&
-						widget_contains_point(widget, (int)event->as.mouse_button.x, (int)event->as.mouse_button.y)) {
-						widget->callbacks.on_mouse_down(widget, state);
-						break; // Stop after the first widget handles the event
-					}
+				FloraWidget *hit_widget = find_deepest_containing_widget(screen, event->as.mouse_button.x,
+																		 event->as.mouse_button.y);
+				if (hit_widget != NULL) {
+					hit_widget->callbacks.on_mouse_down(hit_widget, state);
+					printf("Log: FLORA_MOUSE_DOWN - HIT: widget new id, %d\n", hit_widget->id);
 				}
+
 				destroy_event(event);
 				break;
 			}

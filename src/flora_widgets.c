@@ -768,7 +768,43 @@ int widget_contains_point(FloraWidget *widget, const int x, const int y)
 	}
 
 	return x >= widget->style.position.x && x < widget->style.position.x + widget->style.sizing.width.value &&
-		   y >= widget->style.position.y && y < widget->style.position.y + widget->style.sizing.height.value;
+				   y >= widget->style.position.y && y < widget->style.position.y + widget->style.sizing.height.value
+			   ? FLORA_TRUE
+			   : FLORA_FALSE;
+}
+
+FloraWidget *hit_test(FloraWidget *widget, const int x, const int y)
+{
+	if (widget_contains_point(widget, x, y) == FLORA_FALSE) {
+		return NULL;
+	}
+
+	// check in reverse order to get the top most element first
+	for (int i = widget->child_count - 1; i >= 0; i--) {
+		FloraWidget *child = widget->children[i];
+		FloraWidget *deepest_target = hit_test(child, x, y);
+		if (deepest_target) {
+			return deepest_target;
+		}
+	}
+
+	// if no children contained the click, but this node did, return this node
+	return widget;
+}
+
+FloraWidget *find_deepest_containing_widget(FloraScreen *screen, const int x, const int y)
+{
+	for (int i = 0; i < screen->widget_count; i++) {
+		FloraWidget *current = screen->widgets[i];
+		if (current->parent != NULL) {
+			continue; // skip non-root widgets
+		}
+		FloraWidget *deepest_target = hit_test(current, x, y);
+		if (deepest_target) {
+			return deepest_target;
+		}
+	}
+	return NULL;
 }
 
 int cleanup_widget(FloraWidget *widget)
