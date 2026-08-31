@@ -4,6 +4,13 @@
 
 #include "flora.h"
 
+typedef enum {
+	UPDATE_CALLBACK,
+	ON_MOUSE_DOWN_CALLBACK,
+	ON_DESTROY_CALLBACK,
+} FloraWidgetCallbackType;
+
+
 struct FloraWidget {
 	int id;
 	FloraWidgetType type;
@@ -46,6 +53,7 @@ int render_widget(FloraWindow *window, FloraWidget *widget);
 
 int widget_contains_point(FloraWidget *widget, int x, int y);
 
-FloraWidget *find_deepest_containing_widget(FloraScreen *screen, const int x, const int y);
+FloraWidget *find_deepest_containing_widget(FloraScreen *screen, const int x, const int y,
+											FloraWidgetCallbackType callback_type);
 
 #endif // FLORA_WIDGETS_H

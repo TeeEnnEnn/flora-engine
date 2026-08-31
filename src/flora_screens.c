@@ -2,14 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "flora.h"
 #include "flora_apps.h"
 #include "flora_constants.h"
 #include "flora_events.h"
 #include "flora_screens.h"
 #include "flora_widgets.h"
 
-FloraScreen *create_screen(const char *name, const on_init_screen on_init_screen,
-						   const on_deinit_screen on_deinit_screen)
+FloraScreen *create_screen(const char *name, const screen_callback on_init_screen,
+						   const screen_callback on_deinit_screen)
 {
 	FloraScreen *screen = calloc(1, sizeof(FloraScreen));
 	if (!screen) {
@@ -40,8 +41,8 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state)
 
 	for (int i = 0; i < screen->widget_count; i++) {
 		FloraWidget *widget = screen->widgets[i];
-		if (widget && widget->callbacks.update && widget->is_visible) {
-			widget->callbacks.update(widget, state);
+		if (widget && widget->callbacks.on_update && widget->is_visible) {
+			widget->callbacks.on_update(widget, state);
 		}
 	}
 
@@ -55,7 +56,8 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state)
 			}
 			case FLORA_MOUSE_DOWN: {
 				FloraWidget *hit_widget = find_deepest_containing_widget(screen, event->as.mouse_button.x,
-																		 event->as.mouse_button.y);
+																		 event->as.mouse_button.y,
+																		 ON_MOUSE_DOWN_CALLBACK);
 				if (hit_widget != NULL) {
 					hit_widget->callbacks.on_mouse_down(hit_widget, state);
 					printf("Log: FLORA_MOUSE_DOWN - HIT: widget new id, %d\n", hit_widget->id);

@@ -5,15 +5,15 @@
 #include "flora_constants.h"
 
 struct FloraScreen {
-	on_init_screen on_init_screen;
-	on_deinit_screen on_deinit_screen;
+	screen_callback on_init_screen;
+	screen_callback on_deinit_screen;
 	FloraWidget **widgets;
 	int widget_count;
 	int widget_capacity;
 	char name[TABLE_KEY_LENGTH];
 };
 
-FloraScreen *create_screen(const char *name, on_init_screen on_init_screen, on_deinit_screen on_deinit_screen);
+FloraScreen *create_screen(const char *name, screen_callback on_init_screen, screen_callback on_deinit_screen);
 
 void update_screen(FloraScreen *screen, FloraApplicationState *state);
 

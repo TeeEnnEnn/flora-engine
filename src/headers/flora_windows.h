@@ -9,8 +9,8 @@
 #include "table.h"
 
 struct FloraWindow {
-	on_init_window on_init_window;
-	on_deinit_window on_deinit_window;
+	window_callback on_init_window;
+	window_callback on_deinit_window;
 	SDL_Window *window;
 	SDL_Renderer *renderer;
 	TTF_TextEngine *text_engine;

@@ -144,6 +144,11 @@ static void calculate_widget_fit_width(FloraWidget *widget)
 		return;
 	}
 
+	// if you are not dirty then you don't need to recalculate
+	if (widget->is_dirty == FLORA_FALSE) {
+		return;
+	}
+
 	// find the width of your children before we find the width of you
 	for (int i = 0; i < widget->child_count; i++) {
 		calculate_widget_fit_width(widget->children[i]);
@@ -203,6 +208,16 @@ static int calculate_widget_wrapping(FloraWidget *widget)
 		return FLORA_TRUE;
 	}
 
+	// if the widget has no content - do not calculate wrapping
+	if (widget->type == FLORA_TEXT && widget->as.text.content == NULL) {
+		return FLORA_TRUE;
+	}
+
+	// if the widget is not dirty - do not calculate wrapping
+	if (widget->is_dirty == FLORA_FALSE) {
+		return FLORA_TRUE;
+	}
+
 	// at this point we know how much horizontal space the text widget has
 	if (widget->type == FLORA_TEXT) {
 		// maximum width of the text widget
@@ -251,7 +266,11 @@ static void calculate_widget_fit_height(FloraWidget *widget)
 		return;
 	}
 
-	// find the hight of your children before we find the height of you
+	if (widget->is_dirty == FLORA_FALSE) {
+		return;
+	}
+
+	// find the height of your children before we find the height of you
 	for (int i = 0; i < widget->child_count; i++) {
 		calculate_widget_fit_height(widget->children[i]);
 	}
@@ -307,6 +326,10 @@ static void calculate_child_positions(FloraWidget *widget)
 		return;
 	}
 
+	if (widget->is_dirty == FLORA_FALSE) {
+		return;
+	}
+
 	float offsetX = widget->style.padding.left;
 	float offsetY = widget->style.padding.top;
 	if (widget->style.layout_direction == LEFT_TO_RIGHT) {
@@ -336,7 +359,7 @@ static void calculate_child_positions(FloraWidget *widget)
 }
 
 /**
- * Propogate dirty flag upwards
+ * Propagate dirty flag upwards
  */
 static void set_dirty(FloraWidget *widget)
 {
@@ -661,15 +684,15 @@ void set_flora_widget_visible(FloraWidget *widget, int is_visible)
 	set_dirty(widget);
 }
 
-void set_flora_widget_update(FloraWidget *widget, widget_update update)
+void set_flora_widget_update(FloraWidget *widget, widget_callback update)
 {
 	if (!widget) {
 		return;
 	}
-	widget->callbacks.update = update;
+	widget->callbacks.on_update = update;
 }
 
-void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_on_mouse_down on_mouse_down)
+void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_callback on_mouse_down)
 {
 	if (!widget) {
 		return;
@@ -677,7 +700,7 @@ void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_on_mouse_down on
 	widget->callbacks.on_mouse_down = on_mouse_down;
 }
 
-void set_flora_widget_on_destroy(FloraWidget *widget, widget_on_destroy on_destroy)
+void set_flora_widget_on_destroy(FloraWidget *widget, widget_callback on_destroy)
 {
 	if (!widget) {
 		return;
@@ -773,7 +796,7 @@ int widget_contains_point(FloraWidget *widget, const int x, const int y)
 			   : FLORA_FALSE;
 }
 
-FloraWidget *hit_test(FloraWidget *widget, const int x, const int y)
+FloraWidget *hit_test(FloraWidget *widget, const int x, const int y, FloraWidgetCallbackType callback_type)
 {
 	if (widget_contains_point(widget, x, y) == FLORA_FALSE) {
 		return NULL;
@@ -782,24 +805,34 @@ FloraWidget *hit_test(FloraWidget *widget, const int x, const int y)
 	// check in reverse order to get the top most element first
 	for (int i = widget->child_count - 1; i >= 0; i--) {
 		FloraWidget *child = widget->children[i];
-		FloraWidget *deepest_target = hit_test(child, x, y);
+		FloraWidget *deepest_target = hit_test(child, x, y, callback_type);
 		if (deepest_target) {
 			return deepest_target;
 		}
 	}
 
 	// if no children contained the click, but this node did, return this node
-	return widget;
+	switch (callback_type) {
+	case UPDATE_CALLBACK:
+		return widget->callbacks.on_update != NULL ? widget : NULL;
+	case ON_MOUSE_DOWN_CALLBACK:
+		return widget->callbacks.on_mouse_down != NULL ? widget : NULL;
+	case ON_DESTROY_CALLBACK:
+		return widget->callbacks.on_destroy != NULL ? widget : NULL;
+	default:
+		return NULL;
+	}
 }
 
-FloraWidget *find_deepest_containing_widget(FloraScreen *screen, const int x, const int y)
+FloraWidget *find_deepest_containing_widget(FloraScreen *screen, const int x, const int y,
+											FloraWidgetCallbackType callback_type)
 {
 	for (int i = 0; i < screen->widget_count; i++) {
 		FloraWidget *current = screen->widgets[i];
 		if (current->parent != NULL) {
 			continue; // skip non-root widgets
 		}
-		FloraWidget *deepest_target = hit_test(current, x, y);
+		FloraWidget *deepest_target = hit_test(current, x, y, callback_type);
 		if (deepest_target) {
 			return deepest_target;
 		}

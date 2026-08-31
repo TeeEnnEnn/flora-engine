@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.31)
 
 include(FetchContent)
 
-project(flora-engine C)
+project(flora-engine C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -16,32 +18,43 @@ if (CMAKE_BUILD_TYPE STREQUAL "ASAN" AND NOT UNIX)
   message(FATAL_ERROR "ASAN builds are only allowed on UNIX-like systems")
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "ASAN")
-  add_compile_options(-g3 -O0 -Wall -Wextra)
+if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "ASAN")
+    add_compile_options(-g3 -O0 -Wall -Wextra)
 
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer")
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fstack-protector-strong")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fstack-protector-strong")
 
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wformat=2 -Wformat-security")
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wnull-dereference -Wstack-protector")
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Warray-bounds -Wshift-overflow")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wformat=2 -Wformat-security")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wnull-dereference -Wstack-protector")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Warray-bounds -Wshift-overflow")
+  endif()
+
+  if (CMAKE_BUILD_TYPE STREQUAL "ASAN")
+    if (UNIX)
+      set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address")
+      set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined")
+    endif ()
+  endif()
+
+  if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options(-O3 -fno-delete-null-pointer-checks -flto=auto)
+  endif()
+
+  if (CMAKE_BUILD_TYPE STREQUAL "Perf")
+    add_compile_options(-O2 -g -fno-omit-frame-pointer -fno-delete-null-pointer-checks -flto=auto)
+  endif()
+elseif (MSVC)
+  # MSVC-compatible warnings/optimizations; keep LTO off by default to avoid toolchain issues
+  add_compile_options(/W4)
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "ASAN")
-  if (UNIX)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=address")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined")
-  endif ()
-endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  add_compile_options(-O3 -fno-delete-null-pointer-checks -flto -flto=auto)
+# On Windows (MinGW/MSVC) system freetype/harfbuzz are usually not available.
+# Use SDL_ttf's vendored copies so the project builds out-of-the-box.
+if(WIN32)
+  set(SDLTTF_VENDORED ON CACHE BOOL "Use vendored freetype/harfbuzz on Windows" FORCE)
 endif()
-
-if (CMAKE_BUILD_TYPE STREQUAL "Perf")
-  add_compile_options(-O2 -g -fno-omit-frame-pointer -fno-delete-null-pointer-checks -flto -flto=auto)
-endif()
-
 
 FetchContent_Declare (
         SDL3
@@ -87,3 +100,18 @@ target_link_libraries(flora_engine_lib PUBLIC SDL3::SDL3 SDL3_ttf::SDL3_ttf)
 
 add_executable(flora_engine_demo WIN32 examples/basic_demo.c)
 target_link_libraries(flora_engine_demo PRIVATE flora_engine_lib)
+
+# On Windows the SDL shared libraries need to be next to the exe at runtime.
+# Copy them next to flora_engine_demo after building so `build/flora_engine_demo.exe` runs without manual PATH setup.
+if(WIN32)
+  add_custom_command(TARGET flora_engine_demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3::SDL3>
+            $<TARGET_FILE_DIR:flora_engine_demo>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3_ttf::SDL3_ttf>
+            $<TARGET_FILE_DIR:flora_engine_demo>
+    COMMENT "Copying SDL3 DLLs next to flora_engine_demo"
+    VERBATIM
+  )
+endif()

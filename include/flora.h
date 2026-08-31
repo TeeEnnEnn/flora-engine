@@ -49,15 +49,16 @@ typedef enum FloraSizingType { FIT, FIXED, GROW } FloraSizingType;
 
 typedef enum FloraWidgetType { FLORA_BOX, FLORA_TEXT } FloraWidgetType;
 
-typedef void (*widget_update)(FloraWidget *widget, FloraApplicationState *state);
-typedef void (*widget_on_mouse_down)(FloraWidget *widget, FloraApplicationState *state);
-typedef void (*widget_on_destroy)(FloraWidget *widget, FloraApplicationState *state);
 
-typedef void (*on_init_screen)(FloraApplicationState *state, FloraScreen *screen);
-typedef void (*on_deinit_screen)(FloraApplicationState *state, FloraScreen *screen);
+// TODO: change this to widget, screen
+typedef void (*widget_callback)(FloraWidget *widget, FloraApplicationState *state);
 
-typedef void (*on_init_window)(FloraApplicationState *state, FloraWindow *window);
-typedef void (*on_deinit_window)(FloraApplicationState *state, FloraWindow *window);
+// TODO: change this to screen, window
+typedef void (*screen_callback)(FloraApplicationState *state, FloraScreen *screen);
+
+// TODO: change this to window, state
+typedef void (*window_callback)(FloraApplicationState *state, FloraWindow *window);
+
 
 typedef struct {
 	float left;
@@ -101,11 +102,11 @@ typedef struct {
 
 typedef struct {
     /** Called on every frame */
-	widget_update update;
+	widget_callback on_update;
 	/** Called when the mouse down event reaches this widget */
-	widget_on_mouse_down on_mouse_down;
+	widget_callback on_mouse_down;
 	/** Called when the widget is destroyed */
-	widget_on_destroy on_destroy;
+	widget_callback on_destroy;
 } FloraWidgetCallbacks;
 
 /* Sizing helpers - build a FloraDimension / FloraSizing / FloraPadding inline. */
@@ -199,7 +200,7 @@ int set_current_flora_window(FloraApplicationState *state, FloraWindow *window);
  * @return The initialized screen, or NULL on failure
  */
 FloraScreen *init_flora_screen(FloraApplicationState *state, FloraWindow *window, char *screen_name,
-							   on_init_screen on_init_screen, on_deinit_screen on_deinit_screen);
+							   screen_callback on_init_screen, screen_callback on_deinit_screen);
 
 /**
  * Get a screen from a window by its name.
@@ -285,9 +286,9 @@ void set_flora_widget_layout_direction(FloraWidget *widget, FloraLayoutDirection
 void set_flora_widget_visible(FloraWidget *widget, int is_visible);
 
 /* Widget callback setters */
-void set_flora_widget_update(FloraWidget *widget, widget_update update);
-void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_on_mouse_down on_mouse_down);
-void set_flora_widget_on_destroy(FloraWidget *widget, widget_on_destroy on_destroy);
+void set_flora_widget_update(FloraWidget *widget, widget_callback update);
+void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_callback on_mouse_down);
+void set_flora_widget_on_destroy(FloraWidget *widget, widget_callback on_destroy);
 
 /* Base widget callbacks, referenceable by name */
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state);
