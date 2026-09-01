@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "SDL3_ttf/SDL_ttf.h"
+#include "flora.h"
 #include "flora_apps.h"
 #include "flora_constants.h"
 #include "flora_events.h"
@@ -131,7 +132,7 @@ int set_current_flora_window(FloraApplicationState *state, FloraWindow *window)
 }
 
 FloraScreen *init_flora_screen(FloraApplicationState *state, FloraWindow *window, char *screen_name,
-							   on_init_screen on_init_screen, on_deinit_screen on_deinit_screen)
+							   screen_callback on_init_screen, screen_callback on_deinit_screen)
 {
 	if (!state || !window || !screen_name) {
 		fprintf(stderr, "Error: Invalid state, window or screen name.\n");

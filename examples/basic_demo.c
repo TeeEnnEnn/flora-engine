@@ -47,7 +47,7 @@ void go_to_wrapping(FloraWidget *widget, FloraApplicationState *state)
 // It is created last in each screen, so it renders on top and gets the first
 // chance to handle clicks. Fixed-width buttons avoid depending on GROW layout.
 FloraWidget *create_nav_bar(FloraApplicationState *state, FloraWindow *window, const char *back_label,
-							widget_on_mouse_down on_back, const char *forward_label, widget_on_mouse_down on_forward)
+							widget_callback on_back, const char *forward_label, widget_callback on_forward)
 {
 	// The nav bar needs the base font regardless of what the screen registered.
 	add_flora_font(state, OPEN_SANS_FONT_PATH, 18, BASIC_FONT_NAME);

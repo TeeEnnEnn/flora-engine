@@ -49,16 +49,16 @@ typedef enum FloraSizingType { FIT, FIXED, GROW } FloraSizingType;
 
 typedef enum FloraWidgetType { FLORA_BOX, FLORA_TEXT } FloraWidgetType;
 
-typedef void (*widget_update)(FloraWidget *widget, FloraApplicationState *state);
-typedef void (*widget_render)(FloraWidget *widget, FloraWindow *window);
-typedef void (*widget_on_mouse_down)(FloraWidget *widget, FloraApplicationState *state);
-typedef void (*widget_on_destroy)(FloraWidget *widget, FloraApplicationState *state);
 
-typedef void (*on_init_screen)(FloraApplicationState *state, FloraScreen *screen);
-typedef void (*on_deinit_screen)(FloraApplicationState *state, FloraScreen *screen);
+// TODO: change this to widget, screen
+typedef void (*widget_callback)(FloraWidget *widget, FloraApplicationState *state);
 
-typedef void (*on_init_window)(FloraApplicationState *state, FloraWindow *window);
-typedef void (*on_deinit_window)(FloraApplicationState *state, FloraWindow *window);
+// TODO: change this to screen, window
+typedef void (*screen_callback)(FloraApplicationState *state, FloraScreen *screen);
+
+// TODO: change this to window, state
+typedef void (*window_callback)(FloraApplicationState *state, FloraWindow *window);
+
 
 typedef struct {
 	float left;
@@ -88,7 +88,8 @@ typedef struct {
 } FloraPosition;
 
 typedef struct {
-	FloraColour text_colour; /* is not used if not a text widget */
+    /** is not used if not a text widget */
+	FloraColour text_colour;
 	int font_size;
 	FloraColour inner_colour;
 	FloraColour border_colour;
@@ -100,10 +101,12 @@ typedef struct {
 } FloraWidgetStyle;
 
 typedef struct {
-	widget_update update;
-	widget_render render;
-	widget_on_mouse_down on_mouse_down;
-	widget_on_destroy on_destroy;
+    /** Called on every frame */
+	widget_callback on_update;
+	/** Called when the mouse down event reaches this widget */
+	widget_callback on_mouse_down;
+	/** Called when the widget is destroyed */
+	widget_callback on_destroy;
 } FloraWidgetCallbacks;
 
 /* Sizing helpers - build a FloraDimension / FloraSizing / FloraPadding inline. */
@@ -197,7 +200,7 @@ int set_current_flora_window(FloraApplicationState *state, FloraWindow *window);
  * @return The initialized screen, or NULL on failure
  */
 FloraScreen *init_flora_screen(FloraApplicationState *state, FloraWindow *window, char *screen_name,
-							   on_init_screen on_init_screen, on_deinit_screen on_deinit_screen);
+							   screen_callback on_init_screen, screen_callback on_deinit_screen);
 
 /**
  * Get a screen from a window by its name.
@@ -234,7 +237,7 @@ void destroy_flora_screen(FloraApplicationState *state, FloraScreen *screen);
 FloraFont *add_flora_font(FloraApplicationState *state, const char *path, float point_size, char *font_name);
 
 /**
- * Create a box widget. The widget's render callback defaults to base_box_widget_render.
+ * Create a box widget.
  * @param state The flora application state
  * @param parent The parent widget (NULL for a root widget)
  * @param is_visible FLORA_TRUE / FLORA_FALSE
@@ -245,7 +248,7 @@ FloraWidget *create_flora_box_widget(FloraApplicationState *state, FloraWidget *
 									 FloraWidgetStyle style);
 
 /**
- * Create a text widget. The widget's render callback defaults to base_text_widget_render.
+ * Create a text widget.
  * The text is copied, so the caller keeps ownership of the string.
  * The widget is auto-sized to the measured text size unless the style overrides "sizing".
  * @param state The flora application state
@@ -283,15 +286,12 @@ void set_flora_widget_layout_direction(FloraWidget *widget, FloraLayoutDirection
 void set_flora_widget_visible(FloraWidget *widget, int is_visible);
 
 /* Widget callback setters */
-void set_flora_widget_update(FloraWidget *widget, widget_update update);
-void set_flora_widget_render(FloraWidget *widget, widget_render render);
-void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_on_mouse_down on_mouse_down);
-void set_flora_widget_on_destroy(FloraWidget *widget, widget_on_destroy on_destroy);
+void set_flora_widget_update(FloraWidget *widget, widget_callback update);
+void set_flora_widget_on_mouse_down(FloraWidget *widget, widget_callback on_mouse_down);
+void set_flora_widget_on_destroy(FloraWidget *widget, widget_callback on_destroy);
 
 /* Base widget callbacks, referenceable by name */
-void base_box_widget_render(FloraWidget *widget, FloraWindow *window);
 void base_box_widget_on_mouse_down(FloraWidget *widget, FloraApplicationState *state);
-void base_text_widget_render(FloraWidget *widget, FloraWindow *window);
 
 /* FLORA COLOUR DEFINITIONS */
 
