@@ -12,8 +12,6 @@
 struct FloraApplicationState {
 	/* Application Details */
 	char *app_name;
-	int window_width;
-	int window_height;
 
 	uint64_t last_frame_time;
 	double delta_time;

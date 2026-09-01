@@ -13,7 +13,7 @@
 #include "flora_windows.h"
 #include "table.h"
 
-FloraWindow *init_flora_window(FloraApplicationState *state, char *window_title)
+FloraWindow *init_flora_window(FloraApplicationState *state, char *window_title, int window_width, int window_height)
 {
 	if (!state || !window_title) {
 		fprintf(stderr, "Error: Invalid state or window title.\n");
@@ -29,12 +29,15 @@ FloraWindow *init_flora_window(FloraApplicationState *state, char *window_title)
 	strncpy(window->name, window_title, TABLE_KEY_LENGTH - 1);
 	window->name[TABLE_KEY_LENGTH - 1] = '\0';
 
-	window->window = SDL_CreateWindow(window_title, state->window_width, state->window_height, SDL_WINDOW_RESIZABLE);
+	window->window = SDL_CreateWindow(window_title, window_width, window_height, SDL_WINDOW_RESIZABLE);
 	if (!window->window) {
 		fprintf(stderr, "Failed to create window: %s\n", SDL_GetError());
 		free(window);
 		return NULL;
 	}
+
+	window->window_width = window_width;
+	window->window_height = window_height;
 
 	window->renderer = SDL_CreateRenderer(window->window, NULL);
 	if (!window->renderer) {
@@ -210,12 +213,8 @@ int init_flora(FloraApplicationState *app_state, FloraConfig *config)
 
 	if (config) {
 		app_state->app_name = config->app_name ? config->app_name : DEFAULT_APP_NAME;
-		app_state->window_width = config->window_width > 0 ? config->window_width : DEFAULT_WINDOW_WIDTH;
-		app_state->window_height = config->window_height > 0 ? config->window_height : DEFAULT_WINDOW_HEIGHT;
 	} else {
 		app_state->app_name = DEFAULT_APP_NAME;
-		app_state->window_width = DEFAULT_WINDOW_WIDTH;
-		app_state->window_height = DEFAULT_WINDOW_HEIGHT;
 	}
 
 	const int event_queue_capacity = config && config->event_queue_capacity > 0 ? config->event_queue_capacity

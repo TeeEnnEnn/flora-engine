@@ -93,6 +93,17 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state)
 				destroy_event(event);
 				break;
 			}
+			case FLORA_WINDOW_RESIZED: {
+				printf("Log: FLORA_WINDOW_RESIZED - %dx%d\n", event->as.window_event.data1,
+					   event->as.window_event.data2);
+
+				// mark all the widgets as dirty
+				for (int i = 0; i < screen->widget_count; i++) {
+					screen->widgets[i]->is_dirty = FLORA_TRUE;
+				}
+				destroy_event(event);
+				break;
+			}
 			case FLORA_UNHANDLED: {
 				printf("Log: Unhandled Event: %d\n", event->type);
 				destroy_event(event);

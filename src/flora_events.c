@@ -1,3 +1,4 @@
+#include "SDL3/SDL_events.h"
 #define EVENT_LOGS
 
 #include <stdio.h>
@@ -167,6 +168,12 @@ static FloraEvent *new_flora_event(SDL_Event *sdl_event)
 		event->as.quit = sdl_event->quit;
 		break;
 	}
+	case SDL_EVENT_WINDOW_RESIZED: {
+		event->type = FLORA_WINDOW_RESIZED;
+		event->as.window_event = sdl_event->window;
+		break;
+	}
+
 	default: {
 		fprintf(stderr, "Error: unsupported SDL event type %d\n", sdl_event->type);
 		event->type = FLORA_UNHANDLED;
@@ -209,6 +216,11 @@ void get_input(FloraApplicationState *state)
 			break;
 		}
 		case SDL_EVENT_KEY_UP: {
+			FloraEvent *event = new_flora_event(&sdl_event);
+			enqueue_event(&state->event_queue, event);
+			break;
+		}
+		case SDL_EVENT_WINDOW_RESIZED: {
 			FloraEvent *event = new_flora_event(&sdl_event);
 			enqueue_event(&state->event_queue, event);
 			break;

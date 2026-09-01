@@ -526,8 +526,6 @@ int main(const int argc, char **argv)
 
 	FloraConfig config = {
 		.app_name = "Flora Engine Demo",
-		.window_width = 800,
-		.window_height = 600,
 		.event_queue_capacity = DEFAULT_EVENT_QUEUE_CAPACITY,
 		.use_fonts = FLORA_TRUE,
 		.window_table_initial_capacity = DEFAULT_WINDOW_TABLE_CAPACITY,
@@ -540,7 +538,7 @@ int main(const int argc, char **argv)
 		return FLORA_ENGINE_FATAL;
 	}
 
-	FloraWindow *window = init_flora_window(state, "Flora Engine Demo");
+	FloraWindow *window = init_flora_window(state, "Flora Engine Demo", 800, 600);
 	if (!window) {
 		fprintf(stderr, "Error: Failed to initialize window\n");
 		destroy_flora(state);

@@ -18,8 +18,6 @@ extern "C" {
 
 typedef struct {
 	char *app_name;
-	int window_width;
-	int window_height;
 	int event_queue_capacity;
 	int use_fonts;
 	int window_table_initial_capacity;
@@ -165,7 +163,7 @@ FloraWindow *get_current_flora_window(FloraApplicationState *state);
  * @param window_title The title of the window (also used as the table key)
  * @return The initialized window, or NULL on failure
  */
-FloraWindow *init_flora_window(FloraApplicationState *state, char *window_title);
+FloraWindow *init_flora_window(FloraApplicationState *state, char *window_title, int window_width, int window_height);
 
 /**
  * Destroy a window and all of its screens.
