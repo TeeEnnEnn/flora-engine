@@ -38,11 +38,22 @@ if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
   endif()
 
   if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_options(-O3 -fno-delete-null-pointer-checks -flto=auto)
+    if (WIN32)
+      # Disable LTO on Windows/MinGW: -flto=auto breaks with mingw32-make (temp ltrans files + "system cannot find path")
+      add_compile_options(-O3 -fno-delete-null-pointer-checks)
+    else()
+      add_compile_options(-O3 -fno-delete-null-pointer-checks -flto=auto)
+      add_link_options(-flto=auto)
+    endif()
   endif()
 
   if (CMAKE_BUILD_TYPE STREQUAL "Perf")
-    add_compile_options(-O2 -g -fno-omit-frame-pointer -fno-delete-null-pointer-checks -flto=auto)
+    if (WIN32)
+      add_compile_options(-O2 -g -fno-omit-frame-pointer -fno-delete-null-pointer-checks)
+    else()
+      add_compile_options(-O2 -g -fno-omit-frame-pointer -fno-delete-null-pointer-checks -flto=auto)
+      add_link_options(-flto=auto)
+    endif()
   endif()
 elseif (MSVC)
   # MSVC-compatible warnings/optimizations; keep LTO off by default to avoid toolchain issues
@@ -87,6 +98,7 @@ set(LIB_SOURCES
         "src/flora_main.c"
         "src/flora_screens.c"
         "src/flora_widgets.c"
+        "src/flora_windows.c"
         "src/table.c"
 )
 

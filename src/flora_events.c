@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "flora.h"
 #include "flora_apps.h"
 #include "flora_constants.h"
 #include "flora_events.h"
@@ -165,19 +166,24 @@ static FloraEvent *new_flora_event(SDL_Event *sdl_event)
 	}
 	case SDL_EVENT_QUIT: {
 		event->type = FLORA_QUIT;
-		event->as.quit = sdl_event->quit;
+		event->as.quit = (FloraQuitEvent){};
 		break;
 	}
+
 	case SDL_EVENT_WINDOW_RESIZED: {
 		event->type = FLORA_WINDOW_RESIZED;
-		event->as.window_event = sdl_event->window;
+		event->as.window_event = (FloraWindowEvent){
+			.window_width = sdl_event->window.data1,
+			.window_height = sdl_event->window.data2,
+			.window_id = sdl_event->window.windowID,
+		};
 		break;
 	}
 
 	default: {
 		fprintf(stderr, "Error: unsupported SDL event type %d\n", sdl_event->type);
 		event->type = FLORA_UNHANDLED;
-		event->as.quit = (SDL_QuitEvent){0};
+		event->as.quit = (FloraQuitEvent){};
 		break;
 	}
 	}

@@ -19,6 +19,15 @@ typedef enum FloraEventType {
 	FLORA_UNHANDLED,
 } FloraEventType;
 
+typedef struct {
+	uint32_t window_id;
+	int32_t window_width;
+	int32_t window_height;
+} FloraWindowEvent;
+
+typedef struct {
+} FloraQuitEvent;
+
 typedef struct FloraEvent {
 	FloraEventType type;
 
@@ -26,8 +35,8 @@ typedef struct FloraEvent {
 		SDL_MouseMotionEvent mouse_motion;
 		SDL_MouseButtonEvent mouse_button;
 		SDL_KeyboardEvent keyboard;
-		SDL_QuitEvent quit;
-		SDL_WindowEvent window_event;
+		FloraQuitEvent quit;
+		FloraWindowEvent window_event;
 	} as;
 } FloraEvent;
 

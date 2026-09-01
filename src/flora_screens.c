@@ -8,6 +8,78 @@
 #include "flora_events.h"
 #include "flora_screens.h"
 #include "flora_widgets.h"
+#include "flora_windows.h"
+
+FloraScreen *init_flora_screen(FloraApplicationState *state, FloraWindow *window, char *screen_name,
+							   screen_callback on_init_screen, screen_callback on_deinit_screen)
+{
+	if (!state || !window || !screen_name) {
+		fprintf(stderr, "Error: Invalid state, window or screen name.\n");
+		return NULL;
+	}
+
+	FloraScreen *screen = create_screen(screen_name, on_init_screen, on_deinit_screen);
+	if (!screen) {
+		return NULL;
+	}
+
+	if (!set_table(&window->screens, screen, screen->name)) {
+		fprintf(stderr, "Error: Failed to register screen \"%s\".\n", screen->name);
+		free(screen);
+		return NULL;
+	}
+
+	printf("Log: Screen \"%s\" created successfully\n", screen->name);
+	return screen;
+}
+
+void deinit_flora_screen(FloraApplicationState *state, FloraWindow *window, char *screen_name)
+{
+	if (!state || !window || !screen_name) {
+		return;
+	}
+	FloraScreen *screen = get_flora_screen(window, screen_name);
+	if (!screen) {
+		return;
+	}
+	if (screen->on_deinit_screen) {
+		screen->on_deinit_screen(state, screen);
+	}
+	free(screen);
+	set_table(&window->screens, NULL, screen_name);
+	printf("Log: Screen \"%s\" destroyed successfully\n", screen_name);
+}
+
+FloraScreen *get_flora_screen(FloraWindow *window, char *name)
+{
+	if (!window || !name) {
+		return NULL;
+	}
+	void *temp = NULL;
+	if (!get_table(&window->screens, &temp, name)) {
+		return NULL;
+	}
+	return (FloraScreen *)temp;
+}
+
+int set_current_flora_screen(FloraApplicationState *state, FloraScreen *screen)
+{
+	if (!state || !state->current_window || !screen) {
+		return FLORA_FALSE;
+	}
+
+	FloraWindow *window = state->current_window;
+	if (window->current_screen && window->current_screen != screen && window->current_screen->on_deinit_screen) {
+		window->current_screen->on_deinit_screen(state, window->current_screen);
+	}
+
+	window->current_screen = screen;
+	if (screen->on_init_screen) {
+		screen->on_init_screen(state, screen);
+	}
+	printf("Log: Current screen set to \"%s\"\n", screen->name);
+	return FLORA_TRUE;
+}
 
 FloraScreen *create_screen(const char *name, const screen_callback on_init_screen,
 						   const screen_callback on_deinit_screen)
@@ -94,8 +166,8 @@ void update_screen(FloraScreen *screen, FloraApplicationState *state)
 				break;
 			}
 			case FLORA_WINDOW_RESIZED: {
-				printf("Log: FLORA_WINDOW_RESIZED - %dx%d\n", event->as.window_event.data1,
-					   event->as.window_event.data2);
+				printf("Log: FLORA_WINDOW_RESIZED - %dx%d\n", event->as.window_event.window_width,
+					   event->as.window_event.window_height);
 
 				// mark all the widgets as dirty
 				for (int i = 0; i < screen->widget_count; i++) {
